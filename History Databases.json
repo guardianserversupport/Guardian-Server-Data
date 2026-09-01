@@ -1,0 +1,36 @@
+{
+    "1458387955482624083": {
+        "lastKnownConfigurator": "1280789307027755019",
+        "historyLogs": [
+            {
+                "logId": "3390CE40",
+                "actionTrace": "SET_24_7_VOICE_UPLINK",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1479831542330298530",
+                "timestampStr": "21 Juni 2026 pukul 18.14.01 WIB",
+                "unixEpochMs": 1782040441832
+            },
+            {
+                "logId": "6636A8C5",
+                "actionTrace": "SET_24_7_VOICE_UPLINK",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1479831542330298530",
+                "timestampStr": "21 Juni 2026 pukul 17.50.59 WIB",
+                "unixEpochMs": 1782039059497
+            }
+        ]
+    },
+    "1522549653067796591": {
+        "lastKnownConfigurator": "1280789307027755019",
+        "historyLogs": [
+            {
+                "logId": "0B55500C",
+                "actionTrace": "SET_24_7_VOICE_UPLINK",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1522549654393327639",
+                "timestampStr": "01 September 2026 pukul 12.40.12 WIB",
+                "unixEpochMs": 1788241212761
+            }
+        ]
+    }
+}

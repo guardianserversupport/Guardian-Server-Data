@@ -1,0 +1,25 @@
+{
+  "name": "guardian-server",
+  "version": "5.2.0",
+  "description": "Guardian Server - Advanced Discord Management Engine",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --max-old-space-size=380 --gc-interval=100 Index.js"
+  },
+  "engines": {
+    "node": ">=25.0.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.0",
+    "dotenv": "^16.4.5",
+    "@discordjs/voice": "^0.17.0",
+    "libsodium-wrappers": "^0.7.15"
+  },
+  "keywords": [
+    "discord-bot",
+    "guardian-server",
+    "management"
+  ],
+  "author": "Guardian-Dev",
+  "license": "ISC"
+}
