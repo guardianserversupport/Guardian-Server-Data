@@ -18,7 +18,8 @@
         Client, GatewayIntentBits, Partials, Collection, EmbedBuilder, 
         ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionsBitField, 
         ActivityType, ChannelType, REST, Routes, MessageFlags, Events, Options,
-        ModalBuilder, TextInputBuilder, TextInputStyle // 🛡️ KOMPONEN BARU UNTUK MODAL UI
+        ModalBuilder, TextInputBuilder, TextInputStyle, // 🛡️ KOMPONEN BARU UNTUK MODAL UI
+        StringSelectMenuBuilder, StringSelectMenuOptionBuilder // 🛡️ KOMPONEN BARU UNTUK MENU KATEGORI SUPPORT
     } = require('discord.js');
     const { joinVoiceChannel, getVoiceConnection, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
 
@@ -162,6 +163,14 @@
         '1280789307027755019', // Primary Commander
         '1515651449772703755'  // System Test Node
     ];
+
+    // ============================================================================
+    // [SUPPORT TICKET SYSTEM] IDENTITAS ROLE & STAFF SUPPORT
+    // ============================================================================
+    // Role Moderator & Owner yang berhak men-deploy panel support, menutup ticket,
+    // dan menerima notifikasi (tag) ketika sebuah ticket support baru dibuat.
+    const SUPPORT_MODERATOR_ROLE_ID = '1523184178567581817';
+    const SUPPORT_OWNER_USER_ID = '1280789307027755019';
 
     // ============================================================================
     // [NEW MODULE 1.1] TITANIUM DEDICATED HISTORY I/O MATRIX CONTROLLER
@@ -821,7 +830,8 @@
                         { name: 'Verify Panel', value: 'verify' },
                         { name: 'Security Log', value: 'log' },
                         { name: '24/7 VC Online', value: 'vc' },
-                        { name: 'Server Status', value: 'status_server' }
+                        { name: 'Server Status', value: 'status_server' },
+                        { name: 'Support Panel', value: 'support_panel' }
                     ]
                 },
                 { name: 'channel', type: 7, description: 'Target node/channel for the feature', required: true },
@@ -830,12 +840,12 @@
         },
         {
             name: 'lockdown',
-            description: 'Titanium Protocol: Eksekusi Karantina Sistem Global (Commander Only)',
+            description: 'Titanium Protocol: Execute Global System Quarantine (Commander Only)',
             options: [
                 {
                     name: 'mode',
                     type: 5, // Type 5 adalah Boolean dalam spesifikasi Discord API
-                    description: 'Kirim argumen True untuk Mengunci Sistem, atau False untuk Normalisasi.',
+                    description: 'Send True to lock the system, or False to normalize it.',
                     required: true
                 }
             ]
@@ -903,6 +913,500 @@
         { name: 'ban', description: 'Permanent firewall block (Owner)', options: [{ name: 'target', type: 6, description: 'Target entity', required: true }, { name: 'reason', type: 3, description: 'Execution reason', required: false }] },
         { name: 'timeout', description: 'Freeze entity communications (Owner)', options: [{ name: 'target', type: 6, description: 'Target entity', required: true }, { name: 'duration', type: 4, description: 'Duration (Minutes)', required: true }] }
     ];
+
+    // ============================================================================
+    // [NEW MODULE 2.3] TITANIUM SUPPORT CENTER (PRIVATE TICKET SYSTEM)
+    // ============================================================================
+    // Panel Support publik (tombol "Support"), pemilihan kategori privat via Select
+    // Menu, pembuatan Private Thread (ticket) otomatis, hingga invoice ke DM pembuat
+    // ticket saat ticket ditutup. Hanya Role Moderator / Owner (dan pembuat ticket)
+    // yang berwenang menutup sebuah ticket.
+
+    // Kategori pilihan yang tersedia pada menu pemilihan ticket
+    const SUPPORT_CATEGORIES = {
+        general_help: {
+            value: 'general_help',
+            key: 'general-help',
+            label: 'General Help',
+            emoji: '💬',
+            description: 'Questions about the server or bot'
+        },
+        technical_issue: {
+            value: 'technical_issue',
+            key: 'technical-issue',
+            label: 'Technical Issue',
+            emoji: '🔧',
+            description: 'Bugs, errors, technical problems'
+        },
+        other: {
+            value: 'other',
+            key: 'other',
+            label: 'Other',
+            emoji: '📦',
+            description: 'Anything else'
+        }
+    };
+
+    /**
+     * Menghasilkan kode Ticket unik buatan bot (contoh: T-WL7DFC).
+     * @returns {string} Kode ticket berformat T-XXXXXX.
+     */
+    function generateSupportTicketCode() {
+        const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const rawBytes = crypto.randomBytes(6);
+        let code = '';
+        for (let i = 0; i < rawBytes.length; i++) {
+            code += charset[rawBytes[i] % charset.length];
+        }
+        return `T-${code}`;
+    }
+
+    /**
+     * Memformat durasi (ms) menjadi narasi manusiawi, contoh: "12 minutes".
+     * @param {number} milliseconds
+     * @returns {string}
+     */
+    function formatSupportDuration(milliseconds) {
+        const totalSeconds = Math.max(1, Math.floor(milliseconds / 1000));
+        if (totalSeconds < 60) return `${totalSeconds} second${totalSeconds !== 1 ? 's' : ''}`;
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        if (totalMinutes < 60) return `${totalMinutes} minute${totalMinutes !== 1 ? 's' : ''}`;
+        const totalHours = Math.floor(totalMinutes / 60);
+        if (totalHours < 24) return `${totalHours} hour${totalHours !== 1 ? 's' : ''} ${totalMinutes % 60} min`;
+        const totalDays = Math.floor(totalHours / 24);
+        return `${totalDays} day${totalDays !== 1 ? 's' : ''} ${totalHours % 24} h`;
+    }
+
+    // ============================================================================
+    // UI BUILDER MATRIX (SUPPORT CENTER)
+    // ============================================================================
+
+    /** Panel publik "Support Center" (mirip Gambar 3) */
+    function buildSupportCenterEmbed() {
+        return new EmbedBuilder()
+            .setColor('#5865F2')
+            .setTitle('🛟 Support Center')
+            .setDescription(
+                'Need help or have a question?\n\n' +
+                'Click the **Support** button below to open a **private support ticket**. ' +
+                'A moderator will respond as soon as possible.\n\n' +
+                '🔒 Your ticket is **private** — only you and the support team can see it.\n\n' +
+                '> Please only open a ticket when you actually need help.'
+            )
+            .setFooter({ text: 'Guardian Server Support System • Titanium Engine' })
+            .setTimestamp();
+    }
+
+    /** Tombol publik "Support" yang menempel di bawah panel Support Center */
+    function buildSupportOpenButtonRow() {
+        return new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId('support_open')
+                .setLabel('Support')
+                .setEmoji('📩')
+                .setStyle(ButtonStyle.Primary)
+        );
+    }
+
+    /** Menu pilihan kategori privat (mirip Gambar 1) — hanya user penekan tombol yang melihat */
+    function buildSupportCategoryMenuRow() {
+        return new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('support_category_select')
+                .setPlaceholder('Choose the category that best matches your issue…')
+                .setMinValues(1)
+                .setMaxValues(1)
+                .addOptions(
+                    Object.values(SUPPORT_CATEGORIES).map((category) =>
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel(category.label)
+                            .setDescription(category.description)
+                            .setEmoji(category.emoji)
+                            .setValue(category.value)
+                    )
+                )
+        );
+    }
+
+    /** Panel informasi ticket + tombol Close di atas Private Thread (mirip Gambar 2) */
+    function buildTicketPanelEmbed(ticketMeta) {
+        return new EmbedBuilder()
+            .setColor('#5865F2')
+            .setAuthor({
+                name: ticketMeta.creatorDisplayName,
+                iconURL: ticketMeta.creatorAvatarURL
+            })
+            .setTitle(`${ticketMeta.categoryEmoji} ${ticketMeta.categoryLabel}`)
+            .setDescription('Thank you for contacting support! Please describe your issue in as much detail as possible below.')
+            .addFields(
+                { name: '📝 Ticket ID', value: `\`${ticketMeta.ticketId}\``, inline: true },
+                { name: '🗂️ Category', value: `${ticketMeta.categoryEmoji} ${ticketMeta.categoryLabel}`, inline: true },
+                { name: '📌 Status', value: '`Please wait for a moderator to respond.`', inline: false },
+                { name: '⏰ Opened', value: `<t:${Math.floor(ticketMeta.openedAt / 1000)}:R>`, inline: true }
+            )
+            .setFooter({ text: "Close the ticket with the button below when you're done." })
+            .setTimestamp();
+    }
+
+    /** Tombol merah "Close Ticket" pada panel close */
+    function buildTicketCloseButtonRow(disabled = false) {
+        return new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId('support_close')
+                .setLabel('Close Ticket')
+                .setEmoji('🔒')
+                .setStyle(ButtonStyle.Danger)
+                .setDisabled(disabled)
+        );
+    }
+
+    /** Panel "closed" pengganti panel asli saat ticket ditutup */
+    function buildTicketClosedPanelEmbed(ticketMeta, closerTag, closedAt) {
+        return new EmbedBuilder()
+            .setColor('#2ECC71')
+            .setAuthor({
+                name: ticketMeta.creatorDisplayName,
+                iconURL: ticketMeta.creatorAvatarURL
+            })
+            .setTitle(`${ticketMeta.categoryEmoji} ${ticketMeta.categoryLabel} — Closed`)
+            .setDescription('This ticket has been **closed**. Thank you for contacting support!')
+            .addFields(
+                { name: '📝 Ticket ID', value: `\`${ticketMeta.ticketId}\``, inline: true },
+                { name: '🗂️ Category', value: `${ticketMeta.categoryEmoji} ${ticketMeta.categoryLabel}`, inline: true },
+                { name: '📌 Status', value: '`CLOSED`', inline: false },
+                { name: '⏰ Opened', value: `<t:${Math.floor(ticketMeta.openedAt / 1000)}:R>`, inline: true },
+                { name: '🔒 Closed', value: `<t:${Math.floor(closedAt / 1000)}:R>`, inline: true },
+                { name: '🔧 Closed By', value: closerTag, inline: false }
+            )
+            .setFooter({ text: 'Guardian Server Support System • Ticket Archived' })
+            .setTimestamp();
+    }
+
+    /** Invoice (resi) yang dikirim ke DM pembuat ticket saat ticket ditutup */
+    function buildSupportInvoiceEmbed(ticketMeta, closerTag, closedAt) {
+        return new EmbedBuilder()
+            .setColor('#5865F2')
+            .setAuthor({
+                name: 'Support Invoice',
+                iconURL: client.user.displayAvatarURL({ dynamic: true })
+            })
+            .setTitle('🧾 Support Ticket Invoice')
+            .setDescription('Your support ticket has been **closed**. Here is the summary of your session:')
+            .addFields(
+                { name: '📝 Ticket ID', value: `\`${ticketMeta.ticketId}\``, inline: true },
+                { name: '🗂️ Category', value: `${ticketMeta.categoryEmoji} ${ticketMeta.categoryLabel}`, inline: true },
+                { name: '👤 Opened By', value: `<@${ticketMeta.creatorId}>`, inline: true },
+                { name: '⏰ Opened', value: `<t:${Math.floor(ticketMeta.openedAt / 1000)}:F>`, inline: true },
+                { name: '🔒 Closed', value: `<t:${Math.floor(closedAt / 1000)}:F>`, inline: true },
+                { name: '🕒 Total Duration', value: `\`${formatSupportDuration(closedAt - ticketMeta.openedAt)}\``, inline: true },
+                { name: '🔧 Closed By', value: closerTag, inline: false },
+                { name: '📄 Chat Transcript', value: 'Attached as a `.txt` file right below this message', inline: false }
+            )
+            .setFooter({ text: 'Thank you for using the Support Center!' })
+            .setTimestamp();
+    }
+
+    /**
+     * Memberi Role Moderator & Owner izin "Manage Threads" pada channel support agar
+     * mereka dapat melihat serta bergabung ke seluruh Private Thread (ticket) aktif.
+     * @param {import('discord.js').TextChannel} channel
+     */
+    async function grantSupportStaffThreadAccess(channel) {
+        const staffTargets = [SUPPORT_MODERATOR_ROLE_ID, SUPPORT_OWNER_USER_ID];
+        for (const targetId of staffTargets) {
+            try {
+                const existingOverwrite = channel.permissionOverwrites.cache.get(targetId);
+                if (existingOverwrite) {
+                    await existingOverwrite.edit({ ManageThreads: true });
+                } else {
+                    try {
+                        await channel.permissionOverwrites.create(targetId, { ManageThreads: true });
+                    } catch (createFault) {
+                        // Overwrite kemungkinan sudah ada namun belum termuat di cache → force update
+                        await channel.permissionOverwrites.edit(targetId, { ManageThreads: true });
+                    }
+                }
+            } catch (accessError) {
+                console.warn(`⚠️ [SUPPORT_ACCESS] Gagal mengunci akses ManageThreads untuk target [${targetId}] di channel ${channel.id}: ${accessError.message}`);
+            }
+        }
+    }
+
+    // ============================================================================
+    // TICKET LIFECYCLE EXECUTOR (SUPPORT CATEGORY → PRIVATE THREAD)
+    // ============================================================================
+
+    /**
+     * Membuat Private Thread (ticket) setelah user memilih kategori pada Select Menu.
+     * @param {import('discord.js').StringSelectMenuInteraction} interaction
+     */
+    async function executeSupportTicketCreation(interaction) {
+        const db = readDB();
+        const guildConfig = db[interaction.guild.id];
+
+        // Validasi: Channel support harus terkonfigurasi dan masih relevan
+        if (!guildConfig || !guildConfig.supportChannel || guildConfig.supportChannel !== interaction.channelId) {
+            return interaction.reply({
+                content: '❌ **[SUPPORT_OFFLINE]** The support system is not configured for this channel. Please contact the moderator team.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        const selectedValue = interaction.values[0];
+        const category = SUPPORT_CATEGORIES[selectedValue];
+        if (!category) {
+            return interaction.reply({
+                content: '❌ **[INVALID_CATEGORY]** The selected category is not recognized. Please try again.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        // Anti-spam: satu user hanya diperbolehkan memiliki satu ticket aktif pada satu waktu
+        const activeTickets = guildConfig.supportTickets || {};
+        const existingTicket = Object.values(activeTickets).find(
+            (ticketData) => ticketData.creatorId === interaction.user.id && ticketData.state === 'open'
+        );
+        if (existingTicket) {
+            return interaction.reply({
+                content: `⚠️ **[DUPLICATE_TICKET]** You already have an open support ticket: <#${existingTicket.threadId}>. Please wait until it is closed before opening a new one.`,
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        try {
+            // 1) Buat Private Thread di dalam channel support dengan nama "(category) · (username)"
+            const parentChannel = interaction.channel;
+            const thread = await parentChannel.threads.create({
+                name: `${category.key} · ${interaction.user.username}`,
+                type: ChannelType.PrivateThread,
+                reason: `Support ticket initiated by ${interaction.user.tag}`
+            });
+
+            // 2) Tambahkan user pembuat ticket ke dalam Private Thread
+            await thread.members.add(interaction.user.id);
+
+            // 3) Bangun metadata ticket & panel close (dikirim paling atas di dalam thread)
+            const ticketId = generateSupportTicketCode();
+            const openedAt = Date.now();
+            const ticketMeta = {
+                threadId: thread.id,
+                ticketId,
+                creatorId: interaction.user.id,
+                creatorDisplayName: interaction.user.username,
+                creatorAvatarURL: interaction.user.displayAvatarURL({ dynamic: true }),
+                category: category.value,
+                categoryKey: category.key,
+                categoryLabel: category.label,
+                categoryEmoji: category.emoji,
+                openedAt,
+                panelMessageId: null,
+                state: 'open'
+            };
+
+            const panelMessage = await thread.send({
+                content: `Please wait for a moderator to respond to your ticket. <@&${SUPPORT_MODERATOR_ROLE_ID}> <@${SUPPORT_OWNER_USER_ID}>`,
+                embeds: [buildTicketPanelEmbed(ticketMeta)],
+                components: [buildTicketCloseButtonRow(false)]
+            });
+            ticketMeta.panelMessageId = panelMessage.id;
+
+            // 4) Simpan metadata ke database agar handler Close tetap berfungsi walau bot restart
+            guildConfig.supportTickets = activeTickets;
+            activeTickets[thread.id] = ticketMeta;
+            writeDB(db);
+
+            console.log(`🎫 [SUPPORT_TICKET_OPENED] Ticket ${ticketId} dibuka oleh ${interaction.user.tag} di thread ${thread.id} (${category.label}).`);
+
+            return interaction.editReply({
+                content: `✅ **Ticket created!** Your private ticket \`${ticketId}\` has been opened: <#${thread.id}> (${category.emoji} **${category.label}**)\nThe moderator team has been notified and will respond as soon as possible.`
+            });
+        } catch (creationError) {
+            console.error(`🔴 [SUPPORT_TICKET_FAULT] Gagal membuat Private Thread support:`, creationError.message);
+            return interaction.editReply({
+                content: `❌ **[SYSTEM_FAULT]** Failed to create your support ticket: \`${creationError.message}\`\nMake sure the bot has the **Create Private Threads** permission and can add members to the thread.`
+            });
+        }
+    }
+
+    /**
+     * Membangun rekaman chat (transcript) dari seluruh pesan pada Private Thread.
+     * Hasilnya berupa teks berformat dengan stempel waktu WIB per pesan.
+     * @param {import('discord.js').ThreadChannel} thread
+     * @param {Object} ticketMeta - Metadata ticket aktif.
+     * @returns {Promise<string>} Isi transcript dalam bentuk string teks.
+     */
+    async function buildSupportThreadTranscript(thread, ticketMeta) {
+        // Mengumpulkan seluruh pesan thread (paginasi mundur maksimal 1.000 pesan)
+        const collectedMessages = [];
+        let beforeId = undefined;
+        for (let page = 0; page < 10; page++) {
+            const fetched = await thread.messages.fetch(beforeId ? { limit: 100, before: beforeId } : { limit: 100 });
+            if (!fetched || fetched.size === 0) break;
+            fetched.forEach((msg) => collectedMessages.push(msg));
+            if (fetched.size < 100) break;
+            beforeId = fetched.last().id;
+        }
+        // Urutkan kembali dari pesan tertua menuju terbaru
+        collectedMessages.reverse();
+
+        const headerLines = [
+            '===================================================',
+            '   SUPPORT TICKET TRANSCRIPT',
+            '===================================================',
+            `Ticket ID   : ${ticketMeta.ticketId}`,
+            `Category    : ${ticketMeta.categoryEmoji} ${ticketMeta.categoryLabel}`,
+            `Thread      : ${thread.name}`,
+            `Server      : ${thread.guild ? thread.guild.name : 'Unknown'}`,
+            '===================================================',
+            ''
+        ];
+
+        const wibFormatter = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Jakarta',
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
+        });
+
+        const bodyLines = [];
+        for (const msg of collectedMessages) {
+            // Lewati pesan sistem (pin, dll.) yang tidak memiliki muatan teks
+            if (msg.system) continue;
+            const stamp = `${wibFormatter.format(new Date(msg.createdTimestamp))} WIB`;
+            const authorName = msg.author ? `${msg.author.username} (${msg.author.id})` : 'Unknown User';
+
+            const extras = [];
+            if (msg.attachments && msg.attachments.size > 0) {
+                msg.attachments.forEach((a) => extras.push(`[Attachment: ${a.name || 'file'}] ${a.url}`));
+            }
+            if (msg.embeds && msg.embeds.length > 0) extras.push('[Embed]');
+            if (msg.stickers && msg.stickers.size > 0) extras.push('[Sticker]');
+
+            const content = (msg.content || '').trim();
+            if (!content && extras.length === 0) continue;
+
+            const lineParts = [`[${stamp}] ${authorName}`];
+            if (content) lineParts.push(content);
+            bodyLines.push(lineParts.concat(extras).join('\n'));
+        }
+
+        let transcript = headerLines.concat(bodyLines).join('\n');
+        if (bodyLines.length === 0) {
+            transcript += '\n(No messages were recorded in this ticket.)\n';
+        }
+
+        // Batas keamanan ukuran lampiran DM Discord (±6 MB agar aman di bawah limit 8 MB)
+        if (Buffer.byteLength(transcript, 'utf8') > 6 * 1024 * 1024) {
+            transcript = transcript.substring(0, 6 * 1024 * 1024) + '\n\n[Transcript truncated - file size limit reached.]\n';
+        }
+
+        return transcript;
+    }
+
+    /**
+     * Menutup ticket: memperbarui panel close, mengirim invoice + transcript ke DM
+     * pembuat ticket, lalu mengarsipkan & mengunci Private Thread.
+     * @param {import('discord.js').ButtonInteraction} interaction
+     */
+    async function executeSupportTicketClose(interaction) {
+        const db = readDB();
+        const guildConfig = db[interaction.guild.id];
+        const ticket = guildConfig && guildConfig.supportTickets
+            ? guildConfig.supportTickets[interaction.channelId]
+            : null;
+
+        if (!ticket || ticket.state !== 'open') {
+            return interaction.reply({
+                content: '❌ **[TICKET_GONE]** This ticket has already been closed or is no longer registered.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        // Otorisasi: Role Moderator, Owner, atau pembuat ticket itu sendiri
+        const isStaff = interaction.member.roles.cache.has(SUPPORT_MODERATOR_ROLE_ID) ||
+            interaction.user.id === SUPPORT_OWNER_USER_ID;
+        const isTicketCreator = interaction.user.id === ticket.creatorId;
+        if (!isStaff && !isTicketCreator) {
+            return interaction.reply({
+                content: '🚫 **[ACCESS_DENIED]** Only the ticket creator or the moderator team can close this ticket.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        const thread = interaction.channel;
+        const closedAt = Date.now();
+        const closerTag = `${interaction.member.user.username} (<@${interaction.user.id}>)`;
+
+        try {
+            // 1) Bangun rekaman chat (transcript) dari seluruh pesan di dalam thread
+            let transcriptText = '';
+            try {
+                transcriptText = await buildSupportThreadTranscript(thread, ticket);
+            } catch (transcriptError) {
+                console.warn(`⚠️ [SUPPORT_CLOSE] Gagal membuat transcript thread: ${transcriptError.message}`);
+            }
+
+            // 2) Ganti panel close (di atas thread) menjadi state "closed" + tombol nonaktif
+            try {
+                const panelMessage = await thread.messages.fetch(ticket.panelMessageId);
+                await panelMessage.edit({
+                    content: '🔒 This ticket has been **closed**. Thank you for contacting support.',
+                    embeds: [buildTicketClosedPanelEmbed(ticket, closerTag, closedAt)],
+                    components: [buildTicketCloseButtonRow(true)]
+                });
+            } catch (panelEditError) {
+                console.warn(`⚠️ [SUPPORT_CLOSE] Panel pesan ${ticket.panelMessageId} tidak dapat diperbarui: ${panelEditError.message}`);
+            }
+
+            // 3) Kirim invoice (resi) + transcript (rekaman chat) ke DM pembuat ticket
+            let invoiceDelivered = false;
+            try {
+                const creatorUser = await client.users.fetch(ticket.creatorId);
+                const transcriptFileName = `${ticket.ticketId}-transcript.txt`;
+                const dmPayload = {
+                    embeds: [buildSupportInvoiceEmbed(ticket, closerTag, closedAt)]
+                };
+                if (transcriptText) {
+                    dmPayload.files = [{
+                        attachment: Buffer.from(transcriptText, 'utf8'),
+                        name: transcriptFileName
+                    }];
+                }
+                await creatorUser.send(dmPayload);
+                invoiceDelivered = true;
+            } catch (invoiceError) {
+                console.warn(`⚠️ [SUPPORT_CLOSE] Invoice gagal terkirim ke DM ${ticket.creatorId}: ${invoiceError.message}`);
+            }
+
+            // 4) Hapus record ticket aktif dari database
+            delete guildConfig.supportTickets[interaction.channelId];
+            writeDB(db);
+
+            console.log(`🔒 [SUPPORT_TICKET_CLOSED] Ticket ${ticket.ticketId} ditutup oleh ${interaction.user.tag}.`);
+
+            // 5) Konfirmasi ke penutup ticket (ephemeral)
+            await interaction.editReply({
+                content: invoiceDelivered
+                    ? `✅ **Ticket closed.** \`${ticket.ticketId}\` has been archived, and the invoice + chat transcript were sent to <@${ticket.creatorId}>'s DMs.`
+                    : `✅ **Ticket closed.** \`${ticket.ticketId}\` has been archived. ⚠️ The invoice and transcript could **not** be delivered to <@${ticket.creatorId}> (their DMs are probably closed).`
+            });
+
+            // 6) Kunci lalu arsipkan thread agar menjadi record read-only
+            await thread.setLocked(true).catch(() => null);
+            await thread.setArchived(true).catch(() => null);
+        } catch (closeError) {
+            console.error(`🔴 [SUPPORT_CLOSE_FAULT] Kegagalan saat menutup ticket:`, closeError.message);
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({
+                    content: `❌ **[SYSTEM_FAULT]** Failed to close the ticket: \`${closeError.message}\``
+                });
+            }
+        }
+    }
 
     // ============================================================================
     // 4. KERNEL BOOT SEQUENCE & STATE RESTORATION (CORE EVENT LISTENERS)
@@ -1429,7 +1933,7 @@
                     .setColor('#FF5555') // Merah Pudar Taktis
                     .setAuthor({ name: '🛡️ Forensic Audit: Deletion Anomaly (Out-of-Cache)' })
                     .setDescription(`⚠️ **Telemetry Alert**: Infrastructure has detected a message that was recently deleted forcefully within the jurisdiction of <#${message.channelId}>.\n\n*System Diagnosis: The core text payload (payload) and the actor's identity trail cannot be reconstructed to the surface as the message's lifespan has been manually cleared from the V8 Engine's memory heap.*`)
-                    .addFields({ name: '🆔 Node Transmisi / Message ID', value: `\`${message.id}\``, inline: true })
+                    .addFields({ name: '🆔 Transmission Node / Message ID', value: `\`${message.id}\``, inline: true })
                     .setFooter({ text: 'Titanium Security Engine • Partial State Handled' })
                     .setTimestamp();
 
@@ -1816,7 +2320,7 @@
                     new EmbedBuilder()
                         .setColor('#FF0033')
                         .setTitle('❌ [ROUTING_ERROR] TRANSMISSION GATEWAY BLOCKED')
-                        .setDescription(`\`\`\`diff\n- Saluran target terverifikasi tidak valid.\n- Tipe Ditemukan: ${targetChannel.type}\n- Resolusi: Harus berupa Text Channel atau Announcement Channel.\n\`\`\``)
+                        .setDescription(`\`\`\`diff\n- The target channel is not valid.\n- Detected Type: ${targetChannel.type}\n- Resolution: Must be a Text Channel or Announcement Channel.\n\`\`\``)
                         .setTimestamp()
                 ],
                 flags: MessageFlags.Ephemeral
@@ -1857,7 +2361,7 @@
             .setColor('#1A1C1F')
             .setAuthor({ name: `TITANIUM KERNEL METERING NETWORK`, iconURL: client.user.displayAvatarURL({ dynamic: true }) })
             .setTitle(`📥 TRANSMISSION INJECTED INTO TASK QUEUE`)
-            .setDescription(`Paket data siaran Anda telah dienkapsulasi secara aman dan dilempar ke inti *Message Broker*. Sistem sedang memproses enkripsi antrean...\n\n**📊 PIPELINE STATUS MANIFEST:**\n• **Job Trace ID :** \`${transmissionHash}\`\n• **Target Node  :** ${targetChannel.toString()}\n• **Priority Tier:** \`${activeConfig.label}\`\n• **Alert System :** \`${pingEveryone ? 'GLOBAL_PING_ACTIVE' : 'SILENT_DISPATCH'}\``)
+            .setDescription(`Your broadcast payload has been securely encapsulated and injected into the core *Message Broker*. The system is now processing the queue encryption...\n\n**📊 PIPELINE STATUS MANIFEST:**\n• **Job Trace ID :** \`${transmissionHash}\`\n• **Target Node  :** ${targetChannel.toString()}\n• **Priority Tier:** \`${activeConfig.label}\`\n• **Alert System :** \`${pingEveryone ? 'GLOBAL_PING_ACTIVE' : 'SILENT_DISPATCH'}\``)
             .addFields({ name: '⚡ BROKER COMPLIANCE RUNTIME', value: `\`\`\`yaml\nStatus: WAITING_FOR_SLOT\nThread: ALLOCATING_VIRTUAL_WORKER\nModule: OMNI_UI_MATRIX_V6\n\`\`\`` })
             .setFooter({ text: 'Titanium Architecture Queue Pool Management' })
             .setTimestamp();
@@ -1926,7 +2430,7 @@
                 const errorEmbed = new EmbedBuilder()
                     .setColor('#FF0033')
                     .setTitle('❌ [MATRIX_SYNC_FAILED] TRANSMISSION DISTORTION')
-                    .setDescription(`Terjadi kegagalan I/O pada Node Gateway ${targetChannel}.\n\n**🛠️ DIAGNOSTIC ANALYSIS:**\n• **Trace Log :** \`${error.message || 'INTERNAL_API_FAULT'}\`\n*Action: Verify Bot Permissions (View, Send, Embed).*`)
+                    .setDescription(`An I/O failure occurred on the Gateway Node ${targetChannel}.\n\n**🛠️ DIAGNOSTIC ANALYSIS:**\n• **Trace Log :** \`${error.message || 'INTERNAL_API_FAULT'}\`\n*Action: Verify Bot Permissions (View, Send, Embed).*`)
                     .setTimestamp();
                 await interaction.editReply({ embeds: [errorEmbed] });
             }
@@ -2045,7 +2549,7 @@
                                 name: 'SECURITY CLEARANCE VERIFIED', 
                                 iconURL: client.user.displayAvatarURL({ dynamic: true }) 
                             })
-                            .setTitle('🛡️ Validasi Transmisi Sistem Otoritatif')
+                            .setTitle('🛡️ Authoritative System Transmission Validation')
                             .setDescription('This operational transmission has undergone a thorough end-to-end encryption process and is validated directly by the Titanium Matrix Engine. \n\nThe message protocol source is guaranteed to be free from anomalies, unaffected by packet injection, and realized by the highest authority in this sector.')
                             .addFields(
                                 { name: 'Encryption Protocol', value: '`AES-256-GCM (Military Grade)`', inline: true },
@@ -2093,6 +2597,38 @@
                 return; // 🛑 Terminator Eksekusi
             }
 
+            // ====================================================
+            // ROUTER 4: SUPPORT CENTER TICKET LAUNCHER (NEW MODULE)
+            // ====================================================
+            if (interaction.customId === 'support_open') {
+                const db = readDB();
+                const guildConfig = db[interaction.guild.id];
+
+                if (!guildConfig || !guildConfig.supportChannel || guildConfig.supportChannel !== interaction.channelId) {
+                    await interaction.reply({
+                        content: '❌ **[SUPPORT_OFFLINE]** The support panel is not active in this channel. Please contact the moderator team.',
+                        flags: MessageFlags.Ephemeral
+                    });
+                    return; // 🛑 Terminator Eksekusi
+                }
+
+                // Tampilkan menu kategori privat (hanya user penekan tombol yang bisa melihatnya)
+                await interaction.reply({
+                    content: '🛟 **Support Center** — Please select the category that best matches your issue below:',
+                    components: [buildSupportCategoryMenuRow()],
+                    flags: MessageFlags.Ephemeral
+                });
+                return; // 🛑 Terminator Eksekusi
+            }
+
+            // ====================================================
+            // ROUTER 5: SUPPORT TICKET CLOSURE (CLOSE TICKET BUTTON)
+            // ====================================================
+            if (interaction.customId === 'support_close') {
+                await executeSupportTicketClose(interaction);
+                return; // 🛑 Terminator Eksekusi
+            }
+
         } // === [END OF OMNI-BUTTON GATEWAY TERMINAL] ===
 
         // ----------------------------------------------------
@@ -2109,7 +2645,7 @@
                 // Fail-safe jika memori sesi kedaluwarsa atau terjadi anomali RAM
                 if (!cachedSession) {
                     return interaction.editReply({ 
-                        content: '❌ **[SESSION_EXPIRED]** Sesi Editor UI Anda telah kedaluwarsa atau terhapus dari RAM oleh Garbage Collector. Silakan inisiasi ulang perintah `/broadcast`.'
+                        content: '❌ **[SESSION_EXPIRED]** Your UI Editor session has expired or was removed from RAM by the Garbage Collector. Please restart the `/broadcast` command.'
                     });
                 }
 
@@ -2135,6 +2671,16 @@
                 return executeTitaniumBroadcastEngine(interaction, payloadData);
             }
             return;
+        }
+
+        // ----------------------------------------------------
+        // [A.3] SUPPORT TICKET CATEGORY GATEWAY (GLOBAL LISTENER)
+        // ----------------------------------------------------
+        if (interaction.isStringSelectMenu()) {
+            if (interaction.customId === 'support_category_select') {
+                return executeSupportTicketCreation(interaction);
+            }
+            return; // Interaksi Select Menu lain tidak ditangani di gerbang ini
         }
         
         // ----------------------------------------------------
@@ -2224,7 +2770,7 @@
                     iconURL: client.user.displayAvatarURL({ dynamic: true }) 
                 })
                 .setTitle('⚡ SUPREME CORE ENGINE DIAGNOSTICS & MATRIX WORKER')
-                .setDescription(`System operating at maximum efficiency with controlled kernel load.\nIntegrasi Message Broker aktif untuk memitigasi bottleneck API rate limit.\n${'━'.repeat(45)}`)
+                .setDescription(`System operating at maximum efficiency with controlled kernel load.\nMessage Broker integration is active to mitigate API rate-limit bottlenecks.\n${'━'.repeat(45)}`)
                 .addFields(
                     { 
                         name: '⚙️ HARDWARE MONITOR', 
@@ -2280,7 +2826,10 @@
         // ========================================================================
         // Validasi eksklusif: Hanya entitas dengan otorisasi Administrator murni yang 
         // memiliki akses ke terminal konfigurasi infrastruktur inti ini.
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        // 🛟 [SUPPORT_OVERRIDE] Fitur 'Support Panel' dikecualikan dari gerbang Administrator
+        // karena hanya boleh di-deploy oleh Role Moderator / Owner (diverifikasi ulang di bawah).
+        const executingFeature = interaction.options.getString('feature');
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator) && executingFeature !== 'support_panel') {
             console.warn(`⚠️ [SECURITY_BREACH] Entity ${interaction.user.tag} (ID: ${interaction.user.id}) attempted to modify infrastructure without Administrator clearance.`);
             return interaction.reply({ 
                 content: '❌ **[ACCESS DENIED]** Protocol Denied: You do not have Administrator-level security clearance. Command authorization is permanently revoked.', 
@@ -2294,6 +2843,21 @@
         // Membedah muatan parameter dari Discord API untuk menentukan sektor target
         const feature = interaction.options.getString('feature');
         const channel = interaction.options.getChannel('channel');
+
+        // ========================================================================
+        // [SUPPORT AUTHORIZATION GATE] Verifikasi operator Panel Support
+        // ========================================================================
+        // Hanya Role Moderator (1523184178567581817) atau Owner (1280789307027755019)
+        // yang berwenang men-deploy fitur 'support_panel'.
+        if (feature === 'support_panel' &&
+            !interaction.member.roles.cache.has(SUPPORT_MODERATOR_ROLE_ID) &&
+            interaction.user.id !== SUPPORT_OWNER_USER_ID) {
+            console.warn(`⚠️ [SECURITY_BREACH] Entity ${interaction.user.tag} (ID: ${interaction.user.id}) attempted to deploy Support Panel without Moderator role clearance.`);
+            return interaction.reply({
+                content: '❌ **[ACCESS DENIED]** Only the Moderator role (or the Owner) can deploy the Support Panel. Command authorization is permanently revoked.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
         
         // ========================================================================
         // 3. INISIALISASI I/O & KUNCI STATUS MEMORI (LOADING DATABASE STATE)
@@ -2414,6 +2978,41 @@
                 break;
                 
             // --------------------------------------------------
+            // [MODUL] 🛟 PANEL SUPPORT CENTER (PRIVATE TICKET SYSTEM)
+            // --------------------------------------------------
+            case 'support_panel':
+                // Validasi: hanya channel teks yang dapat menjadi basis Private Thread (ticket)
+                if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildAnnouncement) {
+                    await interaction.editReply({ content: '❌ **[FATAL_ROUTING_ERROR]** Invalid Node: The Support Panel must be deployed in a Text channel so that private tickets (threads) can be created from it.' });
+                    break;
+                }
+
+                db[interaction.guild.id].supportChannel = channel.id;
+                if (!db[interaction.guild.id].supportTickets) {
+                    db[interaction.guild.id].supportTickets = {};
+                }
+
+                // Beri Role Moderator & Owner akses "Manage Threads" agar seluruh Private
+                // Thread (ticket) dapat dilihat dan diakses oleh staf support.
+                await grantSupportStaffThreadAccess(channel);
+
+                try {
+                    // Kirim panel publik Support Center (embed + tombol Support) ke channel target
+                    await channel.send({
+                        embeds: [buildSupportCenterEmbed()],
+                        components: [buildSupportOpenButtonRow()]
+                    });
+
+                    recordDatabaseHistory(interaction.guild.id, interaction.user.id, 'SUPPORT_PANEL_NODE', channel.id);
+
+                    await interaction.editReply({ content: `✅ **[DEPLOYMENT SUCCESS]** The Support Center panel was successfully deployed to ${channel}. Private support tickets will now be created inside this channel.` });
+                } catch (supportDeployError) {
+                    console.error(`🔴 [SUPPORT_DEPLOY_FAULT] Terjadi kegagalan I/O saat mengirim panel support:`, supportDeployError.message);
+                    await interaction.editReply({ content: `❌ **[SYSTEM_FAULT]** Failed to deploy the Support Panel. Please ensure the bot can send messages and manage threads in ${channel}.` });
+                }
+                break;
+
+            // --------------------------------------------------
             // [MODUL] GERBANG IDENTIFIKASI & VERIFIKASI (VERIFY PANEL)
             // --------------------------------------------------
             case 'verify':
@@ -2434,8 +3033,8 @@
                     .setTitle('🔐 VERIFICATION GATEWAY & SECURITY CLEARANCE')
                     .setDescription('⚠️ **MANDATORY VERIFICATION** (Mandatory Verification) for all personnel to gain operational access to this server.\n\n✅ **User Instructions (Click the VERIFY button below to):**\n• Acquire basic membership Role identity\n• Automatic synchronization of your network nomenclature\n• Unlock the main data channel')
                     .addFields(
-                        { name: '👥 Target Injeksi Role', value: `\`${role.name}\``, inline: true },
-                        { name: '🛡️ Enkripsi Node', value: `\`TITANIUM_V5.3_PROTECTED\``, inline: true }
+                        { name: '👥 Role Injection Target', value: `\`${role.name}\``, inline: true },
+                        { name: '🛡️ Node Encryption', value: `\`TITANIUM_V5.3_PROTECTED\``, inline: true }
                     )
                     .setFooter({ text: 'DATA CENTRE SECURITY GATE • UI interactions are protected by Encryption Algorithms' })
                     .setTimestamp();
@@ -2485,7 +3084,7 @@
             if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
                 console.warn(`⚠️ [SECURITY_BREACH] Entitas ${interaction.user.tag} mencoba mengakses Disaster Recovery Matrix.`);
                 return interaction.reply({ 
-                    content: '🚫 **[ACCESS DENIED]** Operasi diblokir. Anda tidak memiliki otoritas Administrator untuk memanipulasi topologi infrastruktur server.', 
+                    content: '🚫 **[ACCESS DENIED]** Operation blocked. You do not hold Administrator authority to manipulate the server infrastructure topology.', 
                     flags: MessageFlags.Ephemeral 
                 });
             }
@@ -2670,8 +3269,8 @@
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('#FFCC00')
-                                .setTitle('⚠️ PENYIMPANAN KOSONG')
-                                .setDescription('Tidak ditemukan rekam jejak infrastruktur pada Node memori ini. Silakan operasikan komando `/snapshot create` terlebih dahulu.')
+                                .setTitle('⚠️ EMPTY STORAGE')
+                                .setDescription('No infrastructure backup records were found on this memory node. Please run the `/snapshot create` command first.')
                         ]
                     });
                 }
@@ -2684,7 +3283,7 @@
                             `\`[${index + 1}]\` **ID:** \`${snap.snapshotId}\`\n↳ 📅 ${snap.timestampStr}\n↳ 👥 Roles: ${snap.infrastructure.totalRoles} | 📡 Channels: ${snap.infrastructure.totalChannels}\n↳ 👤 Exec: <@${snap.executorId}>`
                         ).join('\n\n')
                     )
-                    .setFooter({ text: 'Gunakan /snapshot restore <ID> untuk memicu pemulihan.' })
+                    .setFooter({ text: 'Use /snapshot restore <ID> to trigger a recovery.' })
                     .setTimestamp();
 
                 return interaction.editReply({ embeds: [listEmbed] });
@@ -2706,8 +3305,8 @@
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('#FF0033')
-                                .setTitle('❌ ANOMALI PENCARIAN (404)')
-                                .setDescription(`Signature Trace ID \`${requestedTraceId}\` tidak terdaftar atau telah tertimpa oleh siklus disk *Garbage Collector*. Verifikasi ulang parameter input Anda.`)
+                                .setTitle('❌ SEARCH ANOMALY (404)')
+                                .setDescription(`Signature Trace ID \`${requestedTraceId}\` is not registered or has been overwritten by the disk *Garbage Collector* cycle. Please re-verify your input parameters.`)
                         ]
                     });
                 }
@@ -2720,7 +3319,7 @@
                 const restoreWarningEmbed = new EmbedBuilder()
                     .setColor('#FF0033')
                     .setAuthor({ name: 'CRITICAL SYSTEM INJUNCTION', iconURL: client.user.displayAvatarURL() })
-                    .setTitle('⚠️ PERINGATAN: INJEKSI REKONSTRUKSI DIMULAI')
+                    .setTitle('⚠️ WARNING: RECONSTRUCTION INJECTION STARTED')
                     .setDescription(`The engine authenticated the restore operation for Snapshot ID \`${targetSnapshot.snapshotId}\`.\n\nThe system redirects this operation to the **Titanium Message Broker** for asynchronous processing (avoiding API timeouts). This process may take 1-5 minutes depending on Discord API traffic.\n\n**STATUS: QUEUING IN BACKGROUND DAEMON...**`)
                     .setTimestamp();
 
@@ -2911,7 +3510,7 @@
                 const titleInputComponent = new TextInputBuilder()
                     .setCustomId('modal_title')
                     .setLabel('BROADCAST HEADER / SUBJECT')
-                    .setPlaceholder('Masukkan judul transmisi tingkat tinggi di sini...')
+                    .setPlaceholder('Enter the high-level transmission title here...')
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true)
                     .setMinLength(3)
@@ -2921,7 +3520,7 @@
                 const messageInputComponent = new TextInputBuilder()
                     .setCustomId('modal_message')
                     .setLabel('MAIN PAYLOAD / CONTENT TRANSMISSION')
-                    .setPlaceholder('Ketik pengumuman sistem secara mendetail di sini. Mendukung sintaksis Markdown (*, **, `, >)...')
+                    .setPlaceholder('Type your detailed system announcement here. Supports Markdown syntax (*, **, `, >)...')
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(true)
                     .setMinLength(10)
@@ -3021,10 +3620,10 @@
         if (interaction.user.id !== LOCKDOWN_COMMANDER_ID) {
             console.warn(`⚠️ [SECURITY_BREACH] Entitas ${interaction.user.tag} mencoba meretas protokol Lockdown.`);
             const unauthorizedEmbed = new EmbedBuilder()
-                .setTitle('❌ Otorisasi Kritis Gagal')
-                .setDescription('Anda tidak memiliki izin (Clearance Level) yang memadai untuk memanipulasi protokol karantina sistem. Tindakan komputasi ini telah direkam secara permanen ke matriks keamanan server.')
+                .setTitle('❌ Critical Authorization Failed')
+                .setDescription('You do not have sufficient clearance level to manipulate the system quarantine protocol. This computational action has been permanently recorded in the server security matrix.')
                 .setColor('#FF0000')
-                .setFooter({ text: 'Infrastruktur Otomatis Anti-Penyusupan | Akses Ditolak' })
+                .setFooter({ text: 'Automated Anti-Intrusion Infrastructure | Access Denied' })
                 .setTimestamp();
             
             return interaction.editReply({ embeds: [unauthorizedEmbed] });
@@ -3036,7 +3635,7 @@
         // [3] Cegah Overwrite Redundan Jika State Sistem Sudah Identik (Mencegah Thrashing RAM)
         if (global.SYSTEM_LOCKDOWN_ACTIVE === targetMode) {
             return interaction.editReply({ 
-                content: `⚠️ **[STATE_CONFLICT]** Eksekusi ditolak secara absolut. Mode Lockdown pada jaringan saat ini sudah bernilai **${targetMode ? 'AKTIF (TRUE)' : 'NONAKTIF (FALSE)'}**. Tidak ada mutasi struktural yang diizinkan untuk menghemat siklus komputasi CPU.` 
+                content: `⚠️ **[STATE_CONFLICT]** Execution has been rejected absolutely. The network Lockdown mode is already set to **${targetMode ? 'ACTIVE (TRUE)' : 'INACTIVE (FALSE)'}**. No structural mutation is allowed in order to conserve CPU computation cycles.` 
             });
         }
 
@@ -3201,13 +3800,13 @@
         const successEmbed = new EmbedBuilder()
             .setTitle(targetMode ? '🔒 SYSTEM LOCKDOWN: PERSISTENT INITIATED' : '✅ SYSTEM LOCKDOWN: TERMINATED & RESTORED')
             .setDescription(targetMode 
-                ? '**Protokol Karantina Global telah diaktifkan secara Permanen!**\nSistem pertahanan (*Defense Matrix*) kini mengunci seluruh lalu lintas interaksi pengguna (*Commands, Modals, Panels*). Sinyal siaga darurat senyap juga telah ditembakkan ke saluran kontrol militer.\n\n⚠️ *Catatan Teknis: Status karantina ini telah diabadikan (Committed) ke dalam Database Hard Drive. Siklus Reboot pada mesin bot tidak akan membuka paksa sistem sebelum menerima komando pelepas.*'
-                : '**Protokol Karantina Global telah dicabut!**\nStatus penguncian sistem telah dibongkar dan dinormalisasi secara total. Seluruh modul diizinkan beroperasi, komputasi kembali normal, dan status pelepasannya telah direkam kuat ke dalam Database fisik.')
+                ? '**The Global Quarantine Protocol has been permanently activated!**\nThe defense system (*Defense Matrix*) now locks all user interaction traffic (*Commands, Modals, Panels*). A silent emergency standby signal has also been dispatched to the military control channel.\n\n⚠️ *Technical Note: This quarantine status has been committed to the Hard Drive Database. Rebooting the bot machine will not forcibly unlock the system before a release command is received.*'
+                : '**The Global Quarantine Protocol has been lifted!**\nThe system lock state has been dismantled and fully normalized. All modules are allowed to operate, computation has returned to normal, and the release state has been securely recorded in the physical Database.')
             .setColor(targetMode ? '#FF0000' : '#00FF00')
             .addFields(
-                { name: 'Otoritas Eksekutif Tertinggi', value: `<@${interaction.user.id}>`, inline: true },
-                { name: 'Status Integritas Disk (I/O)', value: '`SUCCESS_WRITTEN_TO_DISK`', inline: true },
-                { name: 'Matriks Bypass Whitelist Aktif', value: '`1280789307027755019`\n`1515651449772703755`', inline: false }
+                { name: 'Supreme Executive Authority', value: `<@${interaction.user.id}>`, inline: true },
+                { name: 'Disk Integrity Status (I/O)', value: '`SUCCESS_WRITTEN_TO_DISK`', inline: true },
+                { name: 'Active Bypass Whitelist Matrix', value: '`1280789307027755019`\n`1515651449772703755`', inline: false }
             )
             .setFooter({ text: 'Titanium Security & Persistent State Controls', iconURL: client.user.displayAvatarURL() })
             .setTimestamp();
@@ -3227,7 +3826,7 @@
                     name: 'SYSTEM EXCEPTION DETECTED', 
                     iconURL: client.user.displayAvatarURL() 
                 })
-                .setTitle('⚠️ [SYS_FAULT] Interaksi Dibatalkan')
+                .setTitle('⚠️ [SYS_FAULT] Interaction Cancelled')
                 .setDescription(`The Titanium Matrix Engine detected an anomaly while processing your request. The execution path has been forcibly terminated to prevent data corruption in main memory.`)
                 .addFields(
                     { name: 'Diagnostic Code', value: `\`${error.name || 'UNKNOWN_ERR'}\``, inline: true },
@@ -3365,7 +3964,7 @@
             // pengganti standar { ephemeral: true } yang kini telah usang.
             if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
                 return interaction.reply({ 
-                    content: '🚫 **[SECURITY_CLEARANCE_DENIED]** Akses Ditolak. Anda memerlukan otoritas tingkat `Administrator` untuk mengkalibrasi matriks pertahanan jaringan.', 
+                    content: '🚫 **[SECURITY_CLEARANCE_DENIED]** Access Denied. You require `Administrator` level authority to calibrate the network defense matrix.', 
                     flags: MessageFlags.Ephemeral 
                 });
             }
@@ -3399,7 +3998,7 @@
                     writeDB(db);
 
                     // [FORENSIC AUDIT RECORD] Merekam aktivitas perubahaan I/O ke dalam file History terdedikasi
-                    const statusVisualizer = activationMode ? "AKTIF (TRUE) [SYSTEM_LOCK]" : "NONAKTIF (FALSE) [SYSTEM_BYPASS]";
+                    const statusVisualizer = activationMode ? "ACTIVE (TRUE) [SYSTEM_LOCK]" : "INACTIVE (FALSE) [SYSTEM_BYPASS]";
                     recordDatabaseHistory(
                         guildId, 
                         executorId, 
@@ -3442,7 +4041,7 @@
                 
                 if (interaction.deferred || interaction.replied) {
                     await interaction.editReply({ 
-                        content: `🔴 **[CRITICAL_SYSTEM_ERROR]** V8 Engine gagal melakukan komitmen tulis pada struktur memori disk: \`${engineError.message}\`` 
+                        content: `🔴 **[CRITICAL_SYSTEM_ERROR]** The V8 Engine failed to commit the write operation to the disk memory structure: \`${engineError.message}\`` 
                     });
                 }
             }

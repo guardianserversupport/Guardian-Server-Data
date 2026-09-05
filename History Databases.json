@@ -24,12 +24,41 @@
         "lastKnownConfigurator": "1280789307027755019",
         "historyLogs": [
             {
+                "logId": "EB8B51B3",
+                "actionTrace": "SET_SUPPORT_PANEL_NODE",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1522556215027040276",
+                "timestampStr": "05 September 2026 pukul 17.16.13 WIB",
+                "unixEpochMs": 1788603373549
+            },
+            {
+                "logId": "B140C314",
+                "actionTrace": "SET_VERIFICATION_GATEWAY",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1522552385015119893 (Role_Bound: 1522552781268058122)",
+                "timestampStr": "05 September 2026 pukul 17.15.43 WIB",
+                "unixEpochMs": 1788603343115
+            },
+            {
                 "logId": "0B55500C",
                 "actionTrace": "SET_24_7_VOICE_UPLINK",
                 "commanderId": "1280789307027755019",
                 "injectedTarget": "1522549654393327639",
                 "timestampStr": "01 September 2026 pukul 12.40.12 WIB",
                 "unixEpochMs": 1788241212761
+            }
+        ]
+    },
+    "1544296446981832744": {
+        "lastKnownConfigurator": "1280789307027755019",
+        "historyLogs": [
+            {
+                "logId": "63FD2E35",
+                "actionTrace": "SET_24_7_VOICE_UPLINK",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1544296448110370826",
+                "timestampStr": "05 September 2026 pukul 17.19.39 WIB",
+                "unixEpochMs": 1788603579893
             }
         ]
     }

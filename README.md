@@ -21,6 +21,7 @@ hingga protokol karantina global (lockdown) yang persisten.
 | 🔊 **24/7 Voice Uplink** | Bot menetap di voice channel; daemon auto-reconnect tiap 5 detik + resume otomatis saat restart. |
 | 📊 **Server Status UI** | 3 voice channel statistik (Member / Roles / Boosts) yang diperbarui otomatis. |
 | 📡 **Broadcast Matrix** | Kirim pengumuman berprioritas (Critical/Update/Info) dengan UI embed + Modal editor teks. |
+| 🛟 **Support Center** | Panel tombol Support → pilih kategori → Private Thread (ticket) otomatis + invoice & transcript chat ke DM saat ticket ditutup. |
 | ☢️ **Global Lockdown** | Bekukan seluruh interaksi publik secara persisten — tetap terkunci walau bot di-restart. |
 | ⚙️ **Telemetri /status** | Diagnostik hardware (CPU, RAM, uptime), antrean task, dan statistik server. |
 | 🧠 **Task Queue Broker** | Antrean tugas asinkron berprioritas (HIGH/MEDIUM/LOW) untuk mencegah Discord API Rate Limit. |
@@ -68,6 +69,7 @@ Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertam
 | --- | --- | --- |
 | `/protection module:anti_link mode:<true/false>` | Administrator | Mengaktifkan/menonaktifkan Anti-Link Protocol di server. |
 | `/set feature:<...> channel:<#channel> [role]` | Owner + Administrator | Menautkan fitur ke channel: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`. |
+| `/set feature:support_panel channel:<#channel>` | Moderator / Owner | Deploy panel Support Center ke channel (Private Thread ticket dibuat dari channel ini). |
 | `/snapshot create` | Owner + Administrator | Membuat backup penuh arsitektur server. |
 | `/snapshot list` | Owner + Administrator | Menampilkan daftar snapshot yang tersimpan. |
 | `/snapshot restore <snapshot_id>` | Owner + Administrator | ⚠️ Merekonstruksi ulang channel & role dari snapshot (diproses di latar belakang). |
