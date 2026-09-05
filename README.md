@@ -1,108 +1,159 @@
-# Getting Started app for Discord
+# 🛡️ Guardian Server — Advanced Discord Management Engine
 
-This project contains a basic rock-paper-scissors-style Discord app written in JavaScript, built for the [getting started guide](https://discord.com/developers/docs/getting-started).
+Bot manajemen & keamanan Discord all-in-one berbasis **Node.js** dan **discord.js v14**.
+Dirancang untuk menjaga stabilitas server 24/7: proteksi anti-link, sistem verifikasi,
+disaster recovery (snapshot & restore), telemetri status real-time, siaran (broadcast),
+hingga protokol karantina global (lockdown) yang persisten.
 
-![Demo of app](https://github.com/discord/discord-example-app/raw/main/assets/getting-started-demo.gif?raw=true)
+> Engine Version: **5.3.0** · Runtime Target: **Node.js v25+**
 
-## Project structure
-Below is a basic overview of the project structure:
+---
 
-```
-├── examples    -> short, feature-specific sample apps
-│   ├── app.js  -> finished app.js code
-│   ├── button.js
-│   ├── command.js
-│   ├── modal.js
-│   ├── selectMenu.js
-├── .env.sample -> sample .env file
-├── app.js      -> main entrypoint for app
-├── commands.js -> slash command payloads + helpers
-├── game.js     -> logic specific to RPS
-├── utils.js    -> utility functions and enums
-├── package.json
-├── README.md
-└── .gitignore
-```
+## ✨ Fitur Utama
 
-## Running app locally
+| Fitur | Deskripsi |
+| --- | --- |
+| 🛡️ **Anti-Link Protocol** | Deteksi & hapus otomatis pesan berisi URL / undangan Discord ilegal (kecuali Owner & Administrator). |
+| 📦 **Disaster Recovery** | Snapshot arsitektur server (channel + role + permission) lalu restore kapan saja. Maks. 5 backup/server. |
+| 🔐 **Verification Gateway** | Panel tombol VERIFY; memberi role otomatis dan menyinkronkan nickname menjadi `[MEMBER] ...`. |
+| 👋 **Welcome / Goodbye UI** | Embed otomatis saat member masuk/keluar server. |
+| 📋 **Security Log** | Audit trail pesan dihapus/diubah, serta aktivitas voice (join / leave / pindah channel). |
+| 🔊 **24/7 Voice Uplink** | Bot menetap di voice channel; daemon auto-reconnect tiap 5 detik + resume otomatis saat restart. |
+| 📊 **Server Status UI** | 3 voice channel statistik (Member / Roles / Boosts) yang diperbarui otomatis. |
+| 📡 **Broadcast Matrix** | Kirim pengumuman berprioritas (Critical/Update/Info) dengan UI embed + Modal editor teks. |
+| ☢️ **Global Lockdown** | Bekukan seluruh interaksi publik secara persisten — tetap terkunci walau bot di-restart. |
+| ⚙️ **Telemetri /status** | Diagnostik hardware (CPU, RAM, uptime), antrean task, dan statistik server. |
+| 🧠 **Task Queue Broker** | Antrean tugas asinkron berprioritas (HIGH/MEDIUM/LOW) untuk mencegah Discord API Rate Limit. |
 
-Before you start, you'll need to install [NodeJS](https://nodejs.org/en/download/) and [create a Discord app](https://discord.com/developers/applications) with the proper permissions:
-- `applications.commands`
-- `bot` (with Send Messages enabled)
+---
 
+## 🚀 Cara Menjalankan
 
-Configuring the app is covered in detail in the [getting started guide](https://discord.com/developers/docs/getting-started).
+### 1. Prasyarat
+- [Node.js](https://nodejs.org/) **v25 atau lebih baru** (lihat `engines` di `package.json`).
+- Discord Application dengan token bot aktif.
+- Aktifkan **Privileged Gateway Intents** di Developer Portal:
+  - `SERVER MEMBERS INTENT` *(Guild Members)*
+  - `MESSAGE CONTENT INTENT` *(Message Content)*
 
-### Setup project
-
-First clone the project:
-```
-git clone https://github.com/discord/discord-example-app.git
-```
-
-Then navigate to its directory and install dependencies:
-```
-cd discord-example-app
+### 2. Install dependensi
+```bash
 npm install
 ```
-### Get app credentials
 
-Fetch the credentials from your app's settings and add them to a `.env` file (see `.env.sample` for an example). You'll need your app ID (`APP_ID`), bot token (`DISCORD_TOKEN`), and public key (`PUBLIC_KEY`).
-
-Fetching credentials is covered in detail in the [getting started guide](https://discord.com/developers/docs/getting-started).
-
-> 🔑 Environment variables can be added to the `.env` file in Glitch or when developing locally, and in the Secrets tab in Replit (the lock icon on the left).
-
-### Install slash commands
-
-The commands for the example app are set up in `commands.js`. All of the commands in the `ALL_COMMANDS` array at the bottom of `commands.js` will be installed when you run the `register` command configured in `package.json`:
-
+### 3. Konfigurasi `.env`
+Buat file `.env` di folder project (sudah otomatis diabaikan oleh git):
 ```
-npm run register
+BOT_TOKEN=token_bot_kamu_disini
 ```
 
-### Run the app
-
-After your credentials are added, go ahead and run the app:
-
-```
-node app.js
+### 4. Jalankan bot
+```bash
+npm start
 ```
 
-> ⚙️ A package [like `nodemon`](https://github.com/remy/nodemon), which watches for local changes and restarts your app, may be helpful while locally developing.
+Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertama kali online.
 
-If you aren't following the [getting started guide](https://discord.com/developers/docs/getting-started), you can move the contents of `examples/app.js` (the finished `app.js` file) to the top-level `app.js`.
+---
 
-### Set up interactivity
+## 🎮 Daftar Perintah (Slash Commands)
 
-The project needs a public endpoint where Discord can send requests. To develop and test locally, you can use something like [`ngrok`](https://ngrok.com/) to tunnel HTTP traffic.
+### 🔓 Publik
+| Perintah | Fungsi |
+| --- | --- |
+| `/status` | Menampilkan telemetri hardware & diagnostik engine. |
 
-Install ngrok if you haven't already, then start listening on port `3000`:
+### 🛡️ Proteksi & Konfigurasi
+| Perintah | Izin | Fungsi |
+| --- | --- | --- |
+| `/protection module:anti_link mode:<true/false>` | Administrator | Mengaktifkan/menonaktifkan Anti-Link Protocol di server. |
+| `/set feature:<...> channel:<#channel> [role]` | Owner + Administrator | Menautkan fitur ke channel: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`. |
+| `/snapshot create` | Owner + Administrator | Membuat backup penuh arsitektur server. |
+| `/snapshot list` | Owner + Administrator | Menampilkan daftar snapshot yang tersimpan. |
+| `/snapshot restore <snapshot_id>` | Owner + Administrator | ⚠️ Merekonstruksi ulang channel & role dari snapshot (diproses di latar belakang). |
+| `/role target_role:<role> member:<user>` | Server Owner | Memberi role sekaligus mengganti nickname menjadi `[NamaRole] ...`. |
+
+### 📢 Manajemen & Moderasi *(khusus **Server Owner**)*
+| Perintah | Fungsi |
+| --- | --- |
+| `/broadcast target_channel:<#channel> [priority] [image_url] [ping_everyone] [title] [message]` | Siaran pengumuman; kosongkan `title`/`message` untuk membuka editor Modal. |
+| `/clear amount:<1-100>` | Menghapus massal pesan di channel. |
+| `/kick target:<user>` | Mengeluarkan member. |
+| `/ban target:<user> [reason]` | Memblokir permanen member. |
+| `/timeout target:<user> duration:<menit>` | Membekukan komunikasi member sementara. |
+
+### ☢️ Darurat
+| Perintah | Fungsi |
+| --- | --- |
+| `/lockdown mode:<true/false>` | ⚠️ Mengunci/menormalisasi seluruh sistem. Hanya bisa dijalankan **Server Owner** yang juga terdaftar sebagai Komandan (ID di-hardcode di `index.js` sebagai `LOCKDOWN_COMMANDER_ID`). |
+
+> ⚠️ **Catatan penting:** Saat **Lockdown aktif**, seluruh interaksi publik (slash command, tombol, modal) ikut dibekukan, kecuali entitas dalam `LOCKDOWN_BYPASS_WHITELIST`.
+
+---
+
+## 📂 Struktur Project
 
 ```
-ngrok http 3000
+├── index.js                  → Mesin utama bot (semua logika di satu file)
+├── database.json             → Konfigurasi per-server (dibuat otomatis)
+├── History Databases.json    → Audit trail histori perubahan (dibuat otomatis)
+├── Backup_Matrix.json        → Penyimpanan snapshot backup (dibuat otomatis)
+├── Logo/                     → Aset logo bot
+├── package.json
+├── package-lock.json
+├── renovate.json             → Konfigurasi Renovate (auto-update dependency)
+└── .env                      → Token & rahasia (JANGAN di-commit)
 ```
 
-You should see your connection open:
+### Penyimpanan Data
+- **`database.json`** — menyimpan konfigurasi tiap server (welcome channel, verify role,
+  log channel, vc channel, status channels, modul proteksi, dan state lockdown global).
+- **`History Databases.json`** — log audit forensik setiap perubahan konfigurasi.
+- **`Backup_Matrix.json`** — arsip snapshot disaster recovery (maks. 5 per server).
 
+Ketiga file dibuat ulang secara otomatis jika tidak ditemukan, jadi aman untuk dihapus bila ingin memulai dari nol.
+
+---
+
+## 🛠️ Konfigurasi Tingkat Lanjut
+
+Beberapa ID penting di-hardcode di bagian atas `index.js` — sesuaikan sebelum produksi:
+
+| Konstanta | Fungsi |
+| --- | --- |
+| `GLOBAL_LOG_CHANNEL` | Channel global untuk notifikasi server baru bergabung. |
+| `LOCKDOWN_COMMANDER_ID` | Satu-satunya user yang boleh menjalankan `/lockdown`. |
+| `LOCKDOWN_BYPASS_WHITELIST` | Daftar user yang kebal saat lockdown aktif. |
+| `LOCKDOWN_ALERT_CHANNEL_ID` | Channel tujuan sinyal peringatan lockdown otomatis. |
+
+### Izin Bot (rekomendasi)
+Berikan role bot permission **Administrator** agar seluruh modul berfungsi penuh
+(mengelola channel, role, member, menghapus pesan, koneksi voice, dll). Pastikan role bot
+berada **di atas** role yang ingin dikelola (role hierarchy).
+
+---
+
+## 🧠 Arsitektur Internal
+
+- **Single-Instance RAM Cache** — database dibaca sekali ke memori dan disinkronkan
+  ke disk secara asinkron untuk menghindari kebocoran RAM.
+- **Titanium Task Queue Broker** — antrean tugas berprioritas dengan histori terbatas;
+  mencegah bottleneck & Rate Limit (429) pada operasi masif seperti restore snapshot.
+- **Auto-Reconnect Daemon** — memonitor koneksi voice tiap 5 detik.
+- **Anti-Crash Kernel** — menangkap `unhandledRejection`, `uncaughtException`, dan
+  memfilter warning palsu agar proses tidak mati mendadak.
+- **Cache Purge Daemon** — membersihkan entri cache anti-spam yang kedaluwarsa secara berkala.
+
+---
+
+## 🧪 Uji Coba / Development
+
+```bash
+# Cek sintaks file utama tanpa menjalankan bot
+node --check index.js
+
+# Jalankan dengan timeout untuk boot test tanpa login Discord
+BOT_TOKEN=test timeout 10 node index.js
 ```
-Tunnel Status                 online
-Version                       2.0/2.0
-Web Interface                 http://127.0.0.1:4040
-Forwarding                    https://1234-someurl.ngrok.io -> localhost:3000
 
-Connections                  ttl     opn     rt1     rt5     p50     p90
-                              0       0       0.00    0.00    0.00    0.00
-```
-
-Copy the forwarding address that starts with `https`, in this case `https://1234-someurl.ngrok.io`, then go to your [app's settings](https://discord.com/developers/applications).
-
-On the **General Information** tab, there will be an **Interactions Endpoint URL**. Paste your ngrok address there, and append `/interactions` to it (`https://1234-someurl.ngrok.io/interactions` in the example).
-
-Click **Save Changes**, and your app should be ready to run 🚀
-
-## Other resources
-- Read **[the documentation](https://discord.com/developers/docs/intro)** for in-depth information about API features.
-- Browse the `examples/` folder in this project for smaller, feature-specific code examples
-- Join the **[Discord Developers server](https://discord.gg/discord-developers)** to ask questions about the API, attend events hosted by the Discord API team, and interact with other devs.
-- Check out **[community resources](https://discord.com/developers/docs/topics/community-resources#community-resources)** for language-specific tools maintained by community members.
+> Pastikan environment `BOT_TOKEN` terisi saat menjalankan bot sungguhan.
