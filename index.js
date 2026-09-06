@@ -981,29 +981,36 @@
     // UI BUILDER MATRIX (SUPPORT CENTER)
     // ============================================================================
 
-    /** Panel publik "Support Center" (mirip Gambar 3) */
+    /** Panel publik "Guardian Server Support" (Tampilan Guardian Titanium) */
     function buildSupportCenterEmbed() {
         return new EmbedBuilder()
             .setColor('#5865F2')
-            .setTitle('🛟 Support Center')
+            .setTitle('🛡️ GUARDIAN SERVER SUPPORT')
             .setDescription(
-                'Need help or have a question?\n\n' +
-                'Click the **Support** button below to open a **private support ticket**. ' +
-                'A moderator will respond as soon as possible.\n\n' +
-                '🔒 Your ticket is **private** — only you and the support team can see it.\n\n' +
-                '> Please only open a ticket when you actually need help.'
+                '**Welcome to the Official Guardian Server Support System.**\n\n' +
+                'If you require any technical assistance, have inquiries regarding your account, or ' +
+                'wish to report an anomaly, please initiate a secure communication channel by ' +
+                'clicking the ticket button below.\n\n' +
+                '◆ **Response Time:** Our moderation team will address your concern as ' +
+                'expeditiously as possible.\n' +
+                '◆ **Confidentiality:** All tickets are end-to-end isolated (Private Threads) to ' +
+                'ensure data privacy and operational security.'
             )
-            .setFooter({ text: 'Guardian Server Support System • Titanium Engine' })
+            .addFields(
+                { name: '🌐 Encryption Level', value: '`AES-256 (Thread Isolated)`', inline: true },
+                { name: '🛡️ Engine', value: '`GUARDIAN_TITANIUM`', inline: true }
+            )
+            .setFooter({ text: 'Guardian Infrastructure • Secured Support Protocol' })
             .setTimestamp();
     }
 
-    /** Tombol publik "Support" yang menempel di bawah panel Support Center */
+    /** Tombol publik "Ticket" yang menempel di bawah panel Guardian Server Support */
     function buildSupportOpenButtonRow() {
         return new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId('support_open')
-                .setLabel('Support')
-                .setEmoji('📩')
+                .setLabel('Ticket')
+                .setEmoji('🎫')
                 .setStyle(ButtonStyle.Primary)
         );
     }

@@ -24,6 +24,14 @@
         "lastKnownConfigurator": "1280789307027755019",
         "historyLogs": [
             {
+                "logId": "847578F7",
+                "actionTrace": "SET_SUPPORT_PANEL_NODE",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1522556215027040276",
+                "timestampStr": "06 September 2026 pukul 09.15.46 WIB",
+                "unixEpochMs": 1788660946647
+            },
+            {
                 "logId": "EB8B51B3",
                 "actionTrace": "SET_SUPPORT_PANEL_NODE",
                 "commanderId": "1280789307027755019",
