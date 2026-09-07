@@ -68,7 +68,7 @@ Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertam
 ### 🛡️ Proteksi & Konfigurasi
 | Perintah | Izin | Fungsi |
 | --- | --- | --- |
-| `/protection module:anti_link\|anti_spam mode:<true/false>` | Administrator | Mengaktifkan/menonaktifkan modul proteksi (Anti-Link / Anti-Spam) di server. `mode` **wajib diisi**: `true` = aktif, `false` = nonaktif. Modul proteksi **tidak pernah aktif otomatis** saat bot bergabung ke server — hanya aktif setelah dieksekusi via perintah ini. |
+| `/protection module:anti_link\|anti_spam` | Administrator | **Mengaktifkan** modul proteksi (Anti-Link / Anti-Spam) di server — cukup kirim perintah ini, modul otomatis aktif. Untuk **menonaktifkan** gunakan `/disable module:anti_link\|anti_spam`. Modul proteksi **tidak pernah aktif otomatis** saat bot bergabung ke server. |
 | `/set feature:<...> channel:<#channel> [role]` | Owner + Administrator | Menautkan fitur ke channel: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`. |
 | `/set feature:support_panel channel:<#channel>` | Moderator / Owner | Deploy panel Support Center ke channel (Private Thread ticket dibuat dari channel ini). |
 | `/disable module:<...>` | Owner + Administrator | Menonaktifkan modul yang sudah di-*set* / di-*protection* dan menghapus konfigurasinya dari database (module: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`, `support_panel`, `anti_link`, `anti_spam`). Aksi tetap tercatat di History Database. |

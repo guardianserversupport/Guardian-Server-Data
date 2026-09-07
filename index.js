@@ -781,12 +781,6 @@
                         value: 'anti_spam' 
                     }
                 ]
-            },
-            {
-                type: 5, // Kode tipe data Boolean (ApplicationCommandOptionType.Boolean)
-                name: 'mode',
-                description: 'Specify the activation status of the module on this server (True = On / False = Off)',
-                required: true
             }
         ]
     },
@@ -2328,7 +2322,7 @@
             // Passive strike engine that monitors message transmission frequency per user.
             // IMPORTANT: This module NEVER auto-activates when the bot joins a server.
             // It stays dormant until an Administrator explicitly enables it via the
-            // '/protection module:anti_spam mode:true' command. The gate below is the
+            // '/protection module:anti_spam' command. The gate below is the
             // single source of truth: only a committed 'true' state in the database
             // (written exclusively by the /protection command) arms this system.
             if (protectionData.antiSpamActive === true) {
@@ -4201,7 +4195,9 @@
         if (interaction.commandName === 'protection') {
             // [DATA EXTRACTION] Mengekstrak matriks parameter esensial dari Discord API
             const targetModule = interaction.options.getString('module');
-            const activationMode = interaction.options.getBoolean('mode');
+            // Sending the command always ACTIVATES the selected module.
+            // Deactivation is handled exclusively by the /disable command.
+            const activationMode = true;
             const executorId = interaction.user.id;
             const guildId = interaction.guild.id;
 

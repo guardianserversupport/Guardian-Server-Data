@@ -24,6 +24,30 @@
         "lastKnownConfigurator": "1280789307027755019",
         "historyLogs": [
             {
+                "logId": "285D6DB6",
+                "actionTrace": "SET_PROTECTION_ANTI_LINK_MODULE",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "ACTIVE (TRUE) [SYSTEM_LOCK]",
+                "timestampStr": "07 September 2026 pukul 11.58.25 WIB",
+                "unixEpochMs": 1788757105688
+            },
+            {
+                "logId": "F35B90AE",
+                "actionTrace": "SET_PROTECTION_ANTI_LINK_MODULE",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "anti_link (Purged: antiLinkActive)",
+                "timestampStr": "07 September 2026 pukul 11.57.37 WIB",
+                "unixEpochMs": 1788757057623
+            },
+            {
+                "logId": "949A7477",
+                "actionTrace": "SET_PROTECTION_ANTI_LINK_MODULE",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "ACTIVE (TRUE) [SYSTEM_LOCK]",
+                "timestampStr": "07 September 2026 pukul 11.57.29 WIB",
+                "unixEpochMs": 1788757049430
+            },
+            {
                 "logId": "FAB3FDEE",
                 "actionTrace": "SET_PROTECTION_ANTI_SPAM_MODULE",
                 "commanderId": "1280789307027755019",

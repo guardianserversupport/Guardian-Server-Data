@@ -14,7 +14,8 @@
         "supportChannel": "1522556215027040276",
         "supportTickets": {},
         "protectionModules": {
-            "antiSpamActive": true
+            "antiSpamActive": true,
+            "antiLinkActive": true
         }
     },
     "1544296446981832744": {
