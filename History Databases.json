@@ -24,6 +24,14 @@
         "lastKnownConfigurator": "1280789307027755019",
         "historyLogs": [
             {
+                "logId": "FAB3FDEE",
+                "actionTrace": "SET_PROTECTION_ANTI_SPAM_MODULE",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "ACTIVE (TRUE) [SYSTEM_LOCK]",
+                "timestampStr": "07 September 2026 pukul 11.15.24 WIB",
+                "unixEpochMs": 1788754524761
+            },
+            {
                 "logId": "847578F7",
                 "actionTrace": "SET_SUPPORT_PANEL_NODE",
                 "commanderId": "1280789307027755019",

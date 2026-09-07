@@ -14,6 +14,7 @@ hingga protokol karantina global (lockdown) yang persisten.
 | Fitur | Deskripsi |
 | --- | --- |
 | 🛡️ **Anti-Link Protocol** | Deteksi & hapus otomatis pesan berisi URL / undangan Discord ilegal (kecuali Owner & Administrator). |
+| 🛡️ **Anti-Spam Protocol** | Deteksi pesan flood & sistem strike (timeout bertingkat); **tidak aktif otomatis** — hanya aktif jika diaktifkan via `/protection`. |
 | 📦 **Disaster Recovery** | Snapshot arsitektur server (channel + role + permission) lalu restore kapan saja. Maks. 5 backup/server. |
 | 🔐 **Verification Gateway** | Panel tombol VERIFY; memberi role otomatis dan menyinkronkan nickname menjadi `[MEMBER] ...`. |
 | 👋 **Welcome / Goodbye UI** | Embed otomatis saat member masuk/keluar server. |
@@ -67,9 +68,10 @@ Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertam
 ### 🛡️ Proteksi & Konfigurasi
 | Perintah | Izin | Fungsi |
 | --- | --- | --- |
-| `/protection module:anti_link mode:<true/false>` | Administrator | Mengaktifkan/menonaktifkan Anti-Link Protocol di server. |
+| `/protection module:anti_link\|anti_spam mode:<true/false>` | Administrator | Mengaktifkan/menonaktifkan modul proteksi (Anti-Link / Anti-Spam) di server. `mode` **wajib diisi**: `true` = aktif, `false` = nonaktif. Modul proteksi **tidak pernah aktif otomatis** saat bot bergabung ke server — hanya aktif setelah dieksekusi via perintah ini. |
 | `/set feature:<...> channel:<#channel> [role]` | Owner + Administrator | Menautkan fitur ke channel: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`. |
 | `/set feature:support_panel channel:<#channel>` | Moderator / Owner | Deploy panel Support Center ke channel (Private Thread ticket dibuat dari channel ini). |
+| `/disable module:<...>` | Owner + Administrator | Menonaktifkan modul yang sudah di-*set* / di-*protection* dan menghapus konfigurasinya dari database (module: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`, `support_panel`, `anti_link`, `anti_spam`). Aksi tetap tercatat di History Database. |
 | `/snapshot create` | Owner + Administrator | Membuat backup penuh arsitektur server. |
 | `/snapshot list` | Owner + Administrator | Menampilkan daftar snapshot yang tersimpan. |
 | `/snapshot restore <snapshot_id>` | Owner + Administrator | ⚠️ Merekonstruksi ulang channel & role dari snapshot (diproses di latar belakang). |

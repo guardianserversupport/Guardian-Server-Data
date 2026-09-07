@@ -12,7 +12,10 @@
         "verifyChannel": "1522552385015119893",
         "verifyRole": "1522552781268058122",
         "supportChannel": "1522556215027040276",
-        "supportTickets": {}
+        "supportTickets": {},
+        "protectionModules": {
+            "antiSpamActive": true
+        }
     },
     "1544296446981832744": {
         "vcChannel": "1544296448110370826"

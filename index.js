@@ -79,6 +79,9 @@
         STRIKE_2: 60 * 60 * 1000,      // 1 Jam
         STRIKE_3: 24 * 60 * 60 * 1000  // 1 Hari
     };
+    // Anti-Spam Module: Message flood observation window & trigger limit
+    const SPAM_FLOOD_WINDOW_MS = 5 * 1000;  // Observation window (5 seconds)
+    const SPAM_FLOOD_LIMIT = 5;             // Messages allowed inside the window before a strike is issued
 
     // ============================================================================
     // [NEW INFRASTRUCTURE DEPLOYMENT] CACHE PURGE DAEMON MATRIX (ANTI-RAM LEAK PROTOCOL)
@@ -761,7 +764,7 @@
     const commands = [
     {
         name: 'protection',
-        description: '🛡️ Control high-level infrastructure protection systems (Anti-Link, etc.)',
+        description: '🛡️ Control high-level infrastructure protection systems (Anti-Link, Anti-Spam, etc.)',
         options: [
             {
                 type: 3, // Kode tipe data String (ApplicationCommandOptionType.String)
@@ -772,6 +775,10 @@
                     { 
                         name: '🔗 Anti-Link Protocol (Illegal Link Detector and Remover)', 
                         value: 'anti_link' 
+                    },
+                    { 
+                        name: '🛡️ Anti-Spam Protocol (Message Flood Detector and Strike System)', 
+                        value: 'anti_spam' 
                     }
                 ]
             },
@@ -836,6 +843,29 @@
                 },
                 { name: 'channel', type: 7, description: 'Target node/channel for the feature', required: true },
                 { name: 'role', type: 8, description: 'Target role (Required only for Verify setup)', required: false }
+            ]
+        },
+        {
+            name: 'disable',
+            description: 'Disable a configured server feature and purge it from the database (Owner Only)',
+            options: [
+                {
+                    name: 'module',
+                    type: 3,
+                    description: 'Select the infrastructure feature to disable and remove from the database',
+                    required: true,
+                    choices: [
+                        { name: 'Welcome Channel', value: 'welcome' },
+                        { name: 'Goodbye Channel', value: 'goodbye' },
+                        { name: 'Verify Panel', value: 'verify' },
+                        { name: 'Security Log', value: 'log' },
+                        { name: '24/7 VC Online', value: 'vc' },
+                        { name: 'Server Status', value: 'status_server' },
+                        { name: 'Support Panel', value: 'support_panel' },
+                        { name: '🔗 Anti-Link Protocol', value: 'anti_link' },
+                        { name: '🛡️ Anti-Spam Protocol', value: 'anti_spam' }
+                    ]
+                }
             ]
         },
         {
@@ -2291,6 +2321,118 @@
                     console.log('🛡️'.repeat(40) + '\n');
                 }
             }
+
+            // ========================================================================
+            // [NEW MODULE] TITANIUM ANTI-SPAM PROTOCOL (MESSAGE FLOOD & STRIKE SYSTEM)
+            // ========================================================================
+            // Passive strike engine that monitors message transmission frequency per user.
+            // IMPORTANT: This module NEVER auto-activates when the bot joins a server.
+            // It stays dormant until an Administrator explicitly enables it via the
+            // '/protection module:anti_spam mode:true' command. The gate below is the
+            // single source of truth: only a committed 'true' state in the database
+            // (written exclusively by the /protection command) arms this system.
+            if (protectionData.antiSpamActive === true) {
+
+                // ====================================================================
+                // [PHASE 3B] EXECUTIVE CLEARANCE BYPASS (IDENTICAL MATRIX AS ANTI-LINK)
+                // ====================================================================
+                const isGuildOwner = (authorId === guildOwnerId);
+                const isSystemAdmin = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
+                const hasManageMessages = message.member.permissions.has(PermissionsBitField.Flags.ManageMessages);
+
+                // High-clearance entities are immune to the strike system
+                if (isGuildOwner || isSystemAdmin || hasManageMessages) {
+                    return; 
+                }
+
+                // ====================================================================
+                // [PHASE 4B] MESSAGE FLOOD MONITORING (STRIKE SYSTEM ENGINE)
+                // ====================================================================
+                const currentTimestamp = Date.now();
+                let userSpamData = spamCache.get(authorId);
+
+                // Initialize the tracking record for this user in the volatile RAM cache
+                if (!userSpamData) {
+                    userSpamData = { timestamp: currentTimestamp, count: 0, strikes: 0, lastOffense: 0 };
+                    spamCache.set(authorId, userSpamData);
+                }
+
+                // Strike decay: if the user has been clean for a full STRIKE_1 cycle, reset the strike history
+                if (userSpamData.lastOffense > 0 && (currentTimestamp - userSpamData.lastOffense) > SPAM_STRIKE_THRESHOLDS.STRIKE_1) {
+                    userSpamData.strikes = 0;
+                }
+
+                // Reset the flood window counter if the observation window has elapsed
+                if ((currentTimestamp - userSpamData.timestamp) > SPAM_FLOOD_WINDOW_MS) {
+                    userSpamData.count = 0;
+                    userSpamData.timestamp = currentTimestamp;
+                }
+
+                userSpamData.count++;
+                userSpamData.timestamp = currentTimestamp;
+
+                // [FLOOD DETECTED] The user exceeded the permitted message volume inside the window
+                if (userSpamData.count > SPAM_FLOOD_LIMIT) {
+                    userSpamData.strikes++;
+                    userSpamData.count = 0;
+                    userSpamData.lastOffense = currentTimestamp;
+
+                    // Escalation matrix: map the current strike level to the silence (timeout) duration
+                    let timeoutDurationMs = SPAM_STRIKE_THRESHOLDS.STRIKE_1;
+                    let strikeVisual = 'STRIKE_1 (LEVEL 1)';
+                    if (userSpamData.strikes >= 3) {
+                        timeoutDurationMs = SPAM_STRIKE_THRESHOLDS.STRIKE_3;
+                        strikeVisual = 'STRIKE_3 (LEVEL 3)';
+                    } else if (userSpamData.strikes >= 2) {
+                        timeoutDurationMs = SPAM_STRIKE_THRESHOLDS.STRIKE_2;
+                        strikeVisual = 'STRIKE_2 (LEVEL 2)';
+                    }
+
+                    // Annihilate the offending payload and silence the violator
+                    await message.delete().catch(() => null);
+                    await message.member.timeout(timeoutDurationMs, 'Anti-Spam System: Message flood detected').catch(() => {
+                        console.warn(`⚠️ [ANTI_SPAM_WARN] Failed to timeout user ID ${authorId}. Insufficient permissions or role hierarchy conflict.`);
+                    });
+
+                    // Compose the visual strike report card
+                    const strikeEmbed = new EmbedBuilder()
+                        .setAuthor({ 
+                            name: 'TITANIUM NETWORK SHIELD: FLOOD DETECTED', 
+                            iconURL: client.user.displayAvatarURL({ dynamic: true }) 
+                        })
+                        .setTitle('🛑 PROTOCOL VIOLATION: MESSAGE FLOOD PREVENTED')
+                        .setDescription(`Attention <@${authorId}>,\nThis server's automated defense infrastructure (*Anti-Spam System*) is currently **ACTIVE**. Your message transmission rate exceeded the permitted threshold and has been automatically suppressed by the security engine.`)
+                        .addFields(
+                            { name: '📋 Violation Category', value: '`MESSAGE_FLOOD_DETECTED`', inline: true },
+                            { name: '⚙️ System Resolution', value: '`PAYLOAD_ANNIHILATED (DELETED) + TIMEOUT_APPLIED`', inline: true },
+                            { name: '📈 Strike Escalation', value: `\`${strikeVisual} (Total: ${userSpamData.strikes})\``, inline: false },
+                            { name: '⏱️ Silence Duration', value: `\`${Math.round(timeoutDurationMs / 60000)} minutes\``, inline: false }
+                        )
+                        .setColor('#FF0033') // Kode Merah Kriminal
+                        .setFooter({ text: `Terminal Trace ID: ${generateTerminalHash(authorId)} | Automated Threat Removal` })
+                        .setTimestamp();
+
+                    // Forward the warning transmission toward the user's node (channel)
+                    const strikeAlert = await message.channel.send({ 
+                        content: `<@${authorId}> ⚠️ **[SECURITY ALERT]**`, 
+                        embeds: [strikeEmbed] 
+                    });
+
+                    // Self-Destruct Routine: Destroy the visual alert after 10 seconds
+                    // to prevent the chat history from being littered with security logs
+                    setTimeout(() => {
+                        strikeAlert.delete().catch(() => null);
+                    }, 10 * 1000);
+
+                    // Print the activity log to the Server Host Console
+                    console.log('\n' + '🛡️'.repeat(40));
+                    console.log(`🛡️ [ANTI_SPAM_INTERCEPTOR] FLOOD PACKET INTERCEPTED`);
+                    console.log(`   ↳ [ORIGIN]   : ${message.author.tag} (ID: ${authorId})`);
+                    console.log(`   ↳ [SECTOR]   : Server ID ${guildId} | Channel ID ${message.channel.id}`);
+                    console.log(`   ↳ [STRIKE]   : ${strikeVisual} | Timeout ${Math.round(timeoutDurationMs / 60000)} minutes`);
+                    console.log('🛡️'.repeat(40) + '\n');
+                }
+            }
         } catch (interceptorCriticalError) {
             // ========================================================================
             // [PHASE 6] KERNEL PANIC ISOLATION BOUNDARY
@@ -3081,6 +3223,103 @@
         // akan pernah mengalami 'Rolled-Back' state.
         writeDB(db);
         return; // Eksekusi berhasil dilepas tanpa interupsi
+    }
+
+    // ============================================================================
+    // [COMMAND LAYER] /disable - MODULE DECOMMISSION & DATABASE PURGE (OWNER ONLY)
+    // ============================================================================
+    // Menonaktifkan modul yang sebelumnya di-deploy lewat /set, menghapus
+    // konfigurasinya dari database, namun tetap mencatat aksinya ke History DB.
+    if (interaction.commandName === 'disable') {
+        // [1] AUTHORIZATION CLEARANCE (OWNER / ADMINISTRATOR)
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            console.warn(`⚠️ [SECURITY_BREACH] Entity ${interaction.user.tag} (ID: ${interaction.user.id}) attempted to disable infrastructure without Administrator clearance.`);
+            return interaction.reply({ 
+                content: '❌ **[ACCESS DENIED]** Protocol Denied: You do not have Administrator-level security clearance. Command authorization is permanently revoked.', 
+                flags: MessageFlags.Ephemeral 
+            });
+        }
+
+        // [2] PARAMETER EXTRACTION & DATABASE STATE LOAD
+        const moduleToDisable = interaction.options.getString('module');
+        let db = readDB();
+
+        if (!db[interaction.guild.id]) {
+            db[interaction.guild.id] = {};
+        }
+
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        // [3] MODULE ROUTING MATRIX: Resolve the database keys to purge.
+        // Infrastructure modules (deployed via /set) live at the guild node root,
+        // while protection modules (deployed via /protection) live under protectionModules.
+        const infrastructureModuleKeys = {
+            welcome: ['welcomeChannel'],
+            goodbye: ['goodbyeChannel'],
+            log: ['logChannel'],
+            vc: ['vcChannel'],
+            verify: ['verifyChannel', 'verifyRole'],
+            status_server: ['statusChannels'],
+            support_panel: ['supportChannel', 'supportTickets']
+        };
+        const protectionModuleKeys = {
+            anti_link: { dbKey: 'antiLinkActive', historyCode: 'PROTECTION_ANTI_LINK_MODULE' },
+            anti_spam: { dbKey: 'antiSpamActive', historyCode: 'PROTECTION_ANTI_SPAM_MODULE' }
+        };
+
+        if (!infrastructureModuleKeys[moduleToDisable] && !protectionModuleKeys[moduleToDisable]) {
+            await interaction.editReply({ content: `❌ **[INVALID_MODULE]** Unknown module: \`${moduleToDisable}\`. Please select a valid module from the list.` });
+            return;
+        }
+
+        const protectionSpec = protectionModuleKeys[moduleToDisable];
+
+        // Determine whether the module was actually configured before purging
+        let wasConfigured = false;
+        let purgedSummary = [];
+
+        if (protectionSpec) {
+            // Protection modules are stored under the protectionModules sub-node
+            if (!db[interaction.guild.id].protectionModules) {
+                db[interaction.guild.id].protectionModules = {};
+            }
+            if (db[interaction.guild.id].protectionModules[protectionSpec.dbKey] !== undefined) {
+                wasConfigured = true;
+                purgedSummary.push(protectionSpec.dbKey);
+                delete db[interaction.guild.id].protectionModules[protectionSpec.dbKey];
+            }
+        } else {
+            // Infrastructure modules are stored at the guild node root
+            const keys = infrastructureModuleKeys[moduleToDisable];
+            wasConfigured = keys.some(key => db[interaction.guild.id][key] !== undefined);
+            for (const key of keys) {
+                if (db[interaction.guild.id][key] !== undefined) {
+                    purgedSummary.push(key);
+                    delete db[interaction.guild.id][key];
+                }
+            }
+        }
+
+        // [4] AUDIT TRAIL INJECTION: Always record the action in the History DB
+        recordDatabaseHistory(
+            interaction.guild.id,
+            interaction.user.id,
+            protectionSpec ? protectionSpec.historyCode : 'MODULE_DISABLED',
+            `${moduleToDisable} (Purged: ${purgedSummary.length > 0 ? purgedSummary.join(', ') : 'none'})`
+        );
+
+        // [5] PERSIST & CONFIRM
+        writeDB(db);
+
+        if (!wasConfigured) {
+            console.log(`⚠️ [DISABLE_WARNING] Module \`${moduleToDisable}\` was never configured in Server ID [${interaction.guild.id}] — nothing to purge.`);
+            await interaction.editReply({ content: `⚠️ **[MODULE_NOT_FOUND]** The module \`${moduleToDisable}\` is not configured in this server, so there was nothing to purge. The attempt has still been recorded in the audit history.` });
+            return;
+        }
+
+        console.log(`✅ [MODULE_PURGED] Module \`${moduleToDisable}\` decommissioned in Server ID [${interaction.guild.id}] by ${interaction.user.tag}. Purged keys: ${purgedSummary.join(', ')}`);
+        await interaction.editReply({ content: `✅ **[MODULE_DECOMMISSIONED]** Module \`${moduleToDisable}\` has been disabled and its configuration purged from the database. The decommission action has been recorded in the audit history.` });
+        return;
     }
 
     // ============================================================================
@@ -4040,6 +4279,50 @@
                     console.log(`↳ State Baru      : ${statusVisualizer}`);
                     console.log(`↳ ID Eksekutor    : ${executorId}`);
                     console.log(`↳ Yurisdiksi Node : ${guildId}`);
+                    console.log('🛡️'.repeat(35) + '\n');
+                } else if (targetModule === 'anti_spam') {
+                    // Injecting the new boolean configuration state into the local RAM cache
+                    db[guildId].protectionModules.antiSpamActive = activationMode;
+                    
+                    // [DISK SYNC WRITE] Committing persistent memory to the hard drive asynchronously
+                    writeDB(db);
+
+                    // [FORENSIC AUDIT RECORD] Recording the I/O mutation into the dedicated History file
+                    const statusVisualizer = activationMode ? "ACTIVE (TRUE) [SYSTEM_LOCK]" : "INACTIVE (FALSE) [SYSTEM_BYPASS]";
+                    recordDatabaseHistory(
+                        guildId, 
+                        executorId, 
+                        'PROTECTION_ANTI_SPAM_MODULE', 
+                        statusVisualizer
+                    );
+
+                    // [UI ENCAPSULATION] Assembling the high-level executive confirmation interface
+                    const statusColor = activationMode ? 0x00FF00 : 0xFF0000;
+                    const successEmbed = new EmbedBuilder()
+                        .setAuthor({ 
+                            name: 'TITANIUM DEFENSE MATRIX CONTROL', 
+                            iconURL: client.user.displayAvatarURL({ dynamic: true }) 
+                        })
+                        .setTitle(activationMode ? '🛡️ ANTI-SPAM PROTOCOL: ONLINE' : '⚠️ ANTI-SPAM PROTOCOL: OFFLINE')
+                        .setDescription(`The server defense system has received the command parameter mutation and committed it permanently to the database.\n\n**↳ [TARGETING MODULE]** : *Message Flood & Strike System (Anti-Spam)*\n**↳ [REVISION STATUS]** : **${statusVisualizer}**\n**↳ [AUTHORITY CODE]** : <@${executorId}>`)
+                        .addFields(
+                            { name: '💾 Persistent Synchronization', value: '`SUCCESS (WRITTEN TO DISK)`', inline: true },
+                            { name: '📝 Active Forensic Log', value: '`RECORDED (HISTORY DB)`', inline: true }
+                        )
+                        .setColor(statusColor)
+                        .setFooter({ text: `Titanium Security Command | Node ID: ${guildId}` })
+                        .setTimestamp();
+
+                    // [FINAL TRANSMISSION] Forwarding the interface representation into the server chat cycle
+                    await interaction.editReply({ embeds: [successEmbed] });
+                    
+                    // [TELEMETRY OUTPUT] Printing the anomaly-free activity log to the Node Host terminal
+                    console.log('\n' + '🛡️'.repeat(35));
+                    console.log(`[PROTECTION_MODULE_MUTATION] SECURITY PARAMETER REVISED`);
+                    console.log(`↳ Target Protocol : Anti-Spam Sector`);
+                    console.log(`↳ New State       : ${statusVisualizer}`);
+                    console.log(`↳ Executor ID     : ${executorId}`);
+                    console.log(`↳ Guild Jurisdiction : ${guildId}`);
                     console.log('🛡️'.repeat(35) + '\n');
                 }
             } catch (engineError) {
