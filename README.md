@@ -77,6 +77,8 @@ Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertam
 | `/snapshot restore <snapshot_id>` | Owner + Administrator | ⚠️ Merekonstruksi ulang channel & role dari snapshot (diproses di latar belakang). |
 | `/role target_role:<role> member:<user>` | Server Owner | Memberi role sekaligus mengganti nickname menjadi `[NamaRole] ...`. |
 
+> 🛟 **Super Admin (Owner Bot):** User dengan ID `SUPER_ADMIN_ID` (hardcode di `index.js`) memiliki **otoritas absolut** dan otomatis melewati semua gerbang **Server Owner / Administrator** di semua perintah di atas, di server mana pun bot berada.
+
 ### 📢 Manajemen & Moderasi *(khusus **Server Owner**)*
 | Perintah | Fungsi |
 | --- | --- |
@@ -89,7 +91,7 @@ Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertam
 ### ☢️ Darurat
 | Perintah | Fungsi |
 | --- | --- |
-| `/lockdown mode:<true/false>` | ⚠️ Mengunci/menormalisasi seluruh sistem. Hanya bisa dijalankan **Server Owner** yang juga terdaftar sebagai Komandan (ID di-hardcode di `index.js` sebagai `LOCKDOWN_COMMANDER_ID`). |
+| `/lockdown mode:<true/false>` | ⚠️ Mengunci/menormalisasi seluruh sistem. Hanya bisa dijalankan **Server Owner** yang juga terdaftar sebagai Komandan (ID di-hardcode di `index.js` sebagai `LOCKDOWN_COMMANDER_ID`), atau **Super Admin** (`SUPER_ADMIN_ID`). |
 
 > ⚠️ **Catatan penting:** Saat **Lockdown aktif**, seluruh interaksi publik (slash command, tombol, modal) ikut dibekukan, kecuali entitas dalam `LOCKDOWN_BYPASS_WHITELIST`.
 
@@ -126,7 +128,8 @@ Beberapa ID penting di-hardcode di bagian atas `index.js` — sesuaikan sebelum 
 | Konstanta | Fungsi |
 | --- | --- |
 | `GLOBAL_LOG_CHANNEL` | Channel global untuk notifikasi server baru bergabung. |
-| `LOCKDOWN_COMMANDER_ID` | Satu-satunya user yang boleh menjalankan `/lockdown`. |
+| `LOCKDOWN_COMMANDER_ID` | Satu-satunya user yang boleh menjalankan `/lockdown` (di samping Super Admin). |
+| `SUPER_ADMIN_ID` | ID Super Admin (pemilik bot) — bypass semua gerbang Server Owner / Administrator di semua server. |
 | `LOCKDOWN_BYPASS_WHITELIST` | Daftar user yang kebal saat lockdown aktif. |
 | `LOCKDOWN_ALERT_CHANNEL_ID` | Channel tujuan sinyal peringatan lockdown otomatis. |
 

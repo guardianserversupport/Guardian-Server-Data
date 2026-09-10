@@ -160,6 +160,31 @@
     // Otoritas Eksekutif Tertinggi (Hanya entitas ini yang dapat mengubah state lockdown)
     const LOCKDOWN_COMMANDER_ID = '1280789307027755019';
 
+    // [SUPER ADMIN / BOT OWNER] Otoritas absolut di semua server.
+    // ID ini MAWAS melewati (bypass) seluruh gerbang "Server Owner" / "Administrator"
+    // pada semua slash command, karena user ini adalah pemilik bot itu sendiri.
+    const SUPER_ADMIN_ID = '1280789307027755019';
+
+    /**
+     * Memeriksa apakah user adalah Super Admin (pemilik bot) dengan otoritas absolut.
+     * Super Admin dapat melewati semua gerbang "Server Owner" / "Administrator".
+     * @param {string} userId - ID Discord user yang akan diverifikasi.
+     * @returns {boolean} True jika user terdaftar sebagai Super Admin.
+     */
+    function isSuperAdmin(userId) {
+        return userId === SUPER_ADMIN_ID;
+    }
+
+    /**
+     * Gerbang otorisasi gabungan: Server Owner ATAU Super Admin (pemilik bot).
+     * Dipakai pada command yang sebelumnya eksklusif "Server Owner Only".
+     * @param {import('discord.js').Interaction} interaction
+     * @returns {boolean} True jika eksekutor berhak melanjutkan.
+     */
+    function isServerOwnerOrSuperAdmin(interaction) {
+        return isSuperAdmin(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
+    }
+
     // Matriks Pengecualian Karantina (Bypass Whitelist)
     // Berisi array ID pengguna yang kebal terhadap pembekuan sistem (Untuk Testing & Overrides)
     const LOCKDOWN_BYPASS_WHITELIST = [
@@ -2869,8 +2894,9 @@
             // ============================================================================
             // [B.2] AUTHORIZATION & PRIVILEGE CHECK
             // ============================================================================
-            // Mengecek apakah eksekutor perintah memiliki clearance level pemilik server
-            const isOwner = interaction.user.id === interaction.guild.ownerId;
+            // Mengecek apakah eksekutor perintah memiliki clearance level pemilik server.
+            // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) otomatis lolos gerbang ini.
+            const isOwner = isServerOwnerOrSuperAdmin(interaction);
 
         // Command: /status (Public Telemetry)
         if (interaction.commandName === 'status') {
@@ -2957,7 +2983,7 @@
         }
 
         if (!isOwner) {
-            return interaction.reply({ content: '❌ Authorization Denied: Only Administrator Level (Owner) may access this terminal.', flags: MessageFlags.Ephemeral });
+            return interaction.reply({ content: '❌ Authorization Denied: Only the Server Owner (or the Bot Super Admin) may access this terminal.', flags: MessageFlags.Ephemeral });
         }
 
     // ----------------------------------------------------
@@ -2971,8 +2997,10 @@
         // memiliki akses ke terminal konfigurasi infrastruktur inti ini.
         // 🛟 [SUPPORT_OVERRIDE] Fitur 'Support Panel' dikecualikan dari gerbang Administrator
         // karena hanya boleh di-deploy oleh Role Moderator / Owner (diverifikasi ulang di bawah).
+        // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) selalu lolos gerbang ini
+        // tanpa perlu permission Administrator di server client.
         const executingFeature = interaction.options.getString('feature');
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator) && executingFeature !== 'support_panel') {
+        if (!isSuperAdmin(interaction.user.id) && !interaction.member.permissions.has(PermissionsBitField.Flags.Administrator) && executingFeature !== 'support_panel') {
             console.warn(`⚠️ [SECURITY_BREACH] Entity ${interaction.user.tag} (ID: ${interaction.user.id}) attempted to modify infrastructure without Administrator clearance.`);
             return interaction.reply({ 
                 content: '❌ **[ACCESS DENIED]** Protocol Denied: You do not have Administrator-level security clearance. Command authorization is permanently revoked.', 
@@ -2992,7 +3020,9 @@
         // ========================================================================
         // Hanya Role Moderator (1523184178567581817) atau Owner (1280789307027755019)
         // yang berwenang men-deploy fitur 'support_panel'.
+        // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) selalu diizinkan.
         if (feature === 'support_panel' &&
+            !isSuperAdmin(interaction.user.id) &&
             !interaction.member.roles.cache.has(SUPPORT_MODERATOR_ROLE_ID) &&
             interaction.user.id !== SUPPORT_OWNER_USER_ID) {
             console.warn(`⚠️ [SECURITY_BREACH] Entity ${interaction.user.tag} (ID: ${interaction.user.id}) attempted to deploy Support Panel without Moderator role clearance.`);
@@ -3226,7 +3256,8 @@
     // konfigurasinya dari database, namun tetap mencatat aksinya ke History DB.
     if (interaction.commandName === 'disable') {
         // [1] AUTHORIZATION CLEARANCE (OWNER / ADMINISTRATOR)
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) selalu diizinkan.
+        if (!isSuperAdmin(interaction.user.id) && !interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
             console.warn(`⚠️ [SECURITY_BREACH] Entity ${interaction.user.tag} (ID: ${interaction.user.id}) attempted to disable infrastructure without Administrator clearance.`);
             return interaction.reply({ 
                 content: '❌ **[ACCESS DENIED]** Protocol Denied: You do not have Administrator-level security clearance. Command authorization is permanently revoked.', 
@@ -3321,7 +3352,8 @@
         // ============================================================================
         if (interaction.commandName === 'snapshot') {
             // [1] OTORISASI KEAMANAN TINGKAT TINGGI (AUTHORIZATION CLEARANCE)
-            if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) selalu diizinkan.
+            if (!isSuperAdmin(interaction.user.id) && !interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
                 console.warn(`⚠️ [SECURITY_BREACH] Entitas ${interaction.user.tag} mencoba mengakses Disaster Recovery Matrix.`);
                 return interaction.reply({ 
                     content: '🚫 **[ACCESS DENIED]** Operation blocked. You do not hold Administrator authority to manipulate the server infrastructure topology.', 
@@ -3857,7 +3889,8 @@
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         // [1] Pengecekan Otoritas Eksekutif Tertinggi (Otorisasi Titanium)
-        if (interaction.user.id !== LOCKDOWN_COMMANDER_ID) {
+        // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) selalu setara Komandan.
+        if (!isSuperAdmin(interaction.user.id)) {
             console.warn(`⚠️ [SECURITY_BREACH] Entitas ${interaction.user.tag} mencoba meretas protokol Lockdown.`);
             const unauthorizedEmbed = new EmbedBuilder()
                 .setTitle('❌ Critical Authorization Failed')
@@ -4202,9 +4235,10 @@
             const guildId = interaction.guild.id;
 
             // [SECURITY LAYER 2] Otorisasi Sentral: Memblokir keras entitas non-Administrator.
+            // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) selalu diizinkan.
             // 🛡️ REVISI API: Menggunakan 'flags: MessageFlags.Ephemeral' sebagai 
             // pengganti standar { ephemeral: true } yang kini telah usang.
-            if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            if (!isSuperAdmin(interaction.user.id) && !interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
                 return interaction.reply({ 
                     content: '🚫 **[SECURITY_CLEARANCE_DENIED]** Access Denied. You require `Administrator` level authority to calibrate the network defense matrix.', 
                     flags: MessageFlags.Ephemeral 

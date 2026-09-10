@@ -101,5 +101,18 @@
                 "unixEpochMs": 1788603579893
             }
         ]
+    },
+    "1531544975530000405": {
+        "lastKnownConfigurator": "1280789307027755019",
+        "historyLogs": [
+            {
+                "logId": "DF01B974",
+                "actionTrace": "SET_24_7_VOICE_UPLINK",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1531544976293625945",
+                "timestampStr": "10 September 2026 pukul 15.58.26 WIB",
+                "unixEpochMs": 1789030706627
+            }
+        ]
     }
 }
