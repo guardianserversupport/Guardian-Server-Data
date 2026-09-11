@@ -2261,11 +2261,14 @@
                 // ====================================================================
                 // Lapisan ini memberikan kekebalan (Immunity) terhadap komandan dan sistem administrator.
                 const isGuildOwner = (authorId === guildOwnerId);
+                // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) kebal total terhadap
+                // Anti-Link & Anti-Spam di SEMUA server, tanpa terkecuali.
+                const isSuperAdminUser = isSuperAdmin(authorId);
                 const isSystemAdmin = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
                 const hasManageMessages = message.member.permissions.has(PermissionsBitField.Flags.ManageMessages);
 
                 // Jika entitas memiliki clearance tingkat tinggi, lepaskan karantina (Bypass Interception)
-                if (isGuildOwner || isSystemAdmin || hasManageMessages) {
+                if (isSuperAdminUser || isGuildOwner || isSystemAdmin || hasManageMessages) {
                     return; 
                 }
 
@@ -2356,11 +2359,14 @@
                 // [PHASE 3B] EXECUTIVE CLEARANCE BYPASS (IDENTICAL MATRIX AS ANTI-LINK)
                 // ====================================================================
                 const isGuildOwner = (authorId === guildOwnerId);
+                // 🛟 [SUPER ADMIN BYPASS] Pemilik bot (SUPER_ADMIN_ID) kebal total terhadap
+                // Anti-Link & Anti-Spam di SEMUA server, tanpa terkecuali.
+                const isSuperAdminUser = isSuperAdmin(authorId);
                 const isSystemAdmin = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
                 const hasManageMessages = message.member.permissions.has(PermissionsBitField.Flags.ManageMessages);
 
                 // High-clearance entities are immune to the strike system
-                if (isGuildOwner || isSystemAdmin || hasManageMessages) {
+                if (isSuperAdminUser || isGuildOwner || isSystemAdmin || hasManageMessages) {
                     return; 
                 }
 
@@ -3843,11 +3849,28 @@
             await interaction.deferReply({ flags: MessageFlags.Ephemeral });
             const amount = interaction.options.getInteger('amount');
             if (amount < 1 || amount > 100) return interaction.editReply({ content: '❌ Limit Override: Please input a parameter between 1-100.' });
+
+            // 🛟 [PRE-FLIGHT PERMISSION CHECK] Bypass Super Admin hanya melewati gerbang otoritas
+            // user — bot tetap WAJIB punya izin 'Manage Messages' dari Discord API di channel ini.
+            const botPerms = interaction.appPermissions;
+            if (botPerms && !botPerms.has(PermissionsBitField.Flags.ManageMessages)) {
+                console.warn(`⚠️ [CLEAR_FAULT] Bot kekurangan izin 'Manage Messages' di channel ${interaction.channel.id} (Guild ${interaction.guild.id}).`);
+                return interaction.editReply({ 
+                    content: '❌ Operation Failed: **Bot** does not have `Manage Messages` permission in this channel. Re-invite the bot with proper permissions or ask the server admins to grant it.', 
+                    flags: MessageFlags.Ephemeral 
+                });
+            }
+
             try {
-                await interaction.channel.bulkDelete(amount, true);
-                await interaction.editReply({ content: `✅ Node Purification Successful: ${amount} cache entries purged.` });
+                const deleted = await interaction.channel.bulkDelete(amount, true);
+                await interaction.editReply({ content: `✅ Node Purification Successful: ${deleted.size} cache entries purged.` });
             } catch (e) {
-                await interaction.editReply({ content: '❌ Operation Failed: Data exceeding 14 days is protected by platform protocols.' });
+                // 🛟 [DIAGNOSTIC FIX] Tampilkan error asli dari Discord API, jangan teks generik.
+                console.error('🔴 [CLEAR_FAULT] Bulk delete gagal:', e);
+                const failureReason = (e && e.code === 50013)
+                    ? 'Bot lacks `Manage Messages` permission (DiscordAPIError 50013) in this channel/server.'
+                    : `\`${e?.message || 'Unknown API fault'}\``;
+                await interaction.editReply({ content: `❌ Operation Failed: ${failureReason}` });
             }
             return;
         }

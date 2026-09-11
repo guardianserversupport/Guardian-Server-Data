@@ -77,7 +77,7 @@ Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertam
 | `/snapshot restore <snapshot_id>` | Owner + Administrator | ⚠️ Merekonstruksi ulang channel & role dari snapshot (diproses di latar belakang). |
 | `/role target_role:<role> member:<user>` | Server Owner | Memberi role sekaligus mengganti nickname menjadi `[NamaRole] ...`. |
 
-> 🛟 **Super Admin (Owner Bot):** User dengan ID `SUPER_ADMIN_ID` (hardcode di `index.js`) memiliki **otoritas absolut** dan otomatis melewati semua gerbang **Server Owner / Administrator** di semua perintah di atas, di server mana pun bot berada.
+> 🛟 **Super Admin (Owner Bot):** User dengan ID `SUPER_ADMIN_ID` (hardcode di `index.js`) memiliki **otoritas absolut** dan otomatis melewati semua gerbang **Server Owner / Administrator** di semua perintah di atas, di server mana pun bot berada. Super Admin juga **kebal (immune)** terhadap modul **Anti-Link** dan **Anti-Spam** di semua server.
 
 ### 📢 Manajemen & Moderasi *(khusus **Server Owner**)*
 | Perintah | Fungsi |
