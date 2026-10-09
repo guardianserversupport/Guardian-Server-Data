@@ -1587,35 +1587,37 @@
                 const guild = client.guilds.cache.get(guildId);
                 if (!guild) continue;
 
-                // Cek apakah bot sudah memiliki koneksi voice aktif ke guild ini
-                const existingConnection = getVoiceConnection(guildId);
+                const targetChannelId = config.vcChannel;
+                const me = guild.members.me;
+                const currentVc = me?.voice?.channelId;
 
-                if (existingConnection) {
-                    // 🛡️ [FIX] Cek status koneksi - jika sudah Destroyed, hapus dan rejoin
-                    const connectionState = existingConnection.state.status;
-                    if (connectionState === VoiceConnectionStatus.Destroyed) {
-                        console.log(`⚠️ [VC_SENTINEL] Koneksi Destroyed terdeteksi di guild ${guild.name}. Membersihkan dan join ulang...`);
-                        // Lanjut ke proses join ulang di bawah
-                    } else if (connectionState === VoiceConnectionStatus.Disconnected) {
-                        // Koneksi terputus tapi belum dihancurkan, destroy dulu lalu join ulang
-                        console.log(`⚠️ [VC_SENTINEL] Koneksi Disconnected di guild ${guild.name}. Reset dan join ulang...`);
-                        try { existingConnection.destroy(); } catch (_) {}
-                    } else {
-                        // Koneksi aktif, pastikan masih terhubung ke channel yang benar
-                        const currentChannelId = existingConnection.joinConfig?.channelId;
-                        if (currentChannelId === config.vcChannel) {
-                            // Status aman: Bot masih di channel yang benar, skip iterasi ini
-                            continue;
-                        } else {
-                            // Bot terhubung ke channel yang salah, hentikan sesi lama
-                            console.log(`⚠️ [VC_SENTINEL] Bot terhubung ke channel salah (${currentChannelId}) di guild ${guild.name}. Mengakhiri sesi lama...`);
+                // Jika bot sudah berada di VC yang benar, skip
+                if (currentVc === targetChannelId) {
+                    const existingConnection = getVoiceConnection(guildId);
+                    if (existingConnection) {
+                        const connectionState = existingConnection.state.status;
+                        if (connectionState === VoiceConnectionStatus.Destroyed || connectionState === VoiceConnectionStatus.Disconnected) {
+                            console.log(`⚠️ [VC_SENTINEL] Koneksi tidak stabil (${connectionState}) di guild ${guild.name}. Destroy & rejoin...`);
                             try { existingConnection.destroy(); } catch (_) {}
+                            // lanjut join di bawah
+                        } else {
+                            continue; // aman
                         }
+                    } else {
+                        continue; // seharusnya ada koneksi kalo me.voice ada, tapi aman
                     }
+                } else {
+                    // Bot tidak di VC yang benar (bisa jadi di VC lain, atau tidak di VC sama sekali)
+                    const existingConnection = getVoiceConnection(guildId);
+                    if (existingConnection) {
+                        console.log(`⚠️ [VC_SENTINEL] Bot tidak di VC yang dikonfigurasi (current: ${currentVc || 'none'}) di guild ${guild.name}. Destroy & rejoin ke target...`);
+                        try { existingConnection.destroy(); } catch (_) {}
+                    }
+                    // lanjut join
                 }
 
                 // Bot tidak terhubung atau baru saja disconnect, buat sesi baru
-                const targetChannel = guild.channels.cache.get(config.vcChannel);
+                const targetChannel = guild.channels.cache.get(targetChannelId);
                 if (targetChannel && targetChannel.type === ChannelType.GuildVoice) {
                     try {
                         joinVoiceChannel({
