@@ -3990,7 +3990,7 @@
         // Telah dikonfigurasi ulang untuk mendukung format waktu GMT internasional
         // dan cabang arsitektur ganda (Aktivasi vs Deaktivasi).
         try {
-            const LOCKDOWN_ALERT_CHANNEL_ID = '1507707454367076392';
+            const LOCKDOWN_ALERT_CHANNEL_ID = '1522555668089929790';
             
             // Prioritas penarikan data dari memori cache (0ms I/O) dengan Fallback asinkronus 
             // menggunakan fetch API untuk menjamin keandalan koneksi jaringan ke Gateway Discord.
