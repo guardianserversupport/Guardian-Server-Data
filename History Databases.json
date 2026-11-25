@@ -24,6 +24,22 @@
         "lastKnownConfigurator": "1280789307027755019",
         "historyLogs": [
             {
+                "logId": "3A0EFD8D",
+                "actionTrace": "SET_SECURITY_TELEMETRY_LOG",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1522554280618364948",
+                "timestampStr": "21 Oktober 2026 pukul 16.11.46 WIB",
+                "unixEpochMs": 1792573906347
+            },
+            {
+                "logId": "142BCE9B",
+                "actionTrace": "SET_SECURITY_TELEMETRY_LOG",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1522554280618364948",
+                "timestampStr": "12 Oktober 2026 pukul 09.47.13 WIB",
+                "unixEpochMs": 1791773233856
+            },
+            {
                 "logId": "285D6DB6",
                 "actionTrace": "SET_PROTECTION_ANTI_LINK_MODULE",
                 "commanderId": "1280789307027755019",

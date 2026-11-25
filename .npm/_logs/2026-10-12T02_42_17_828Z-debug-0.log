@@ -1,0 +1,510 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@11.17.0
+2 info using node@v25.9.0
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/container/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm install
+7 verbose argv "install"
+8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2026-10-12T02_42_17_828Z-
+9 verbose logfile /home/container/.npm/_logs/2026-10-12T02_42_17_828Z-debug-0.log
+10 silly logfile done cleaning log files
+11 silly packumentCache heap:359137280 maxSize:89784320 maxEntrySize:44892160
+12 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+13 silly idealTree buildDeps
+14 silly fetch manifest @discordjs/voice@^0.17.0
+15 silly packumentCache full:https://registry.npmjs.org/@discordjs%2fvoice cache-miss
+16 http fetch GET 200 https://registry.npmjs.org/npm 874ms
+17 http fetch GET 200 https://registry.npmjs.org/@discordjs%2fvoice 1618ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/@discordjs%2fvoice set size:undefined disposed:false
+19 silly fetch manifest libsodium-wrappers@^0.7.15
+20 silly packumentCache full:https://registry.npmjs.org/libsodium-wrappers cache-miss
+21 http fetch GET 200 https://registry.npmjs.org/libsodium-wrappers 87ms (cache miss)
+22 silly packumentCache full:https://registry.npmjs.org/libsodium-wrappers set size:undefined disposed:false
+23 silly placeDep ROOT @discordjs/voice@0.17.0 REPLACE for: guardian-server@5.2.0 want: ^0.17.0
+24 silly placeDep ROOT libsodium-wrappers@0.7.16 REPLACE for: guardian-server@5.2.0 want: ^0.7.15
+25 silly fetch manifest discord-api-types@0.37.83
+26 silly packumentCache full:https://registry.npmjs.org/discord-api-types cache-miss
+27 http fetch GET 200 https://registry.npmjs.org/discord-api-types 751ms (cache miss)
+28 silly packumentCache full:https://registry.npmjs.org/discord-api-types set size:undefined disposed:false
+29 silly fetch manifest libsodium@^0.7.16
+30 silly packumentCache full:https://registry.npmjs.org/libsodium cache-miss
+31 http fetch GET 200 https://registry.npmjs.org/libsodium 189ms (cache miss)
+32 silly packumentCache full:https://registry.npmjs.org/libsodium set size:undefined disposed:false
+33 silly placeDep node_modules/@discordjs/voice discord-api-types@0.37.83 OK for: @discordjs/voice@0.17.0 want: 0.37.83
+34 silly placeDep ROOT libsodium@0.7.16 OK for: libsodium-wrappers@0.7.16 want: ^0.7.16
+35 silly reify mark retired [ '/home/container/node_modules/accepts' ]
+36 silly reify mark retired [ '/home/container/node_modules/anymatch' ]
+37 silly reify mark retired [ '/home/container/node_modules/array-flatten' ]
+38 silly reify mark retired [ '/home/container/node_modules/balanced-match' ]
+39 silly reify mark retired [ '/home/container/node_modules/binary-extensions' ]
+40 silly reify mark retired [ '/home/container/node_modules/body-parser' ]
+41 silly reify mark retired [ '/home/container/node_modules/brace-expansion' ]
+42 silly reify mark retired [ '/home/container/node_modules/braces' ]
+43 silly reify mark retired [ '/home/container/node_modules/bytes' ]
+44 silly reify mark retired [ '/home/container/node_modules/call-bind-apply-helpers' ]
+45 silly reify mark retired [ '/home/container/node_modules/call-bound' ]
+46 silly reify mark retired [ '/home/container/node_modules/chokidar' ]
+47 silly reify mark retired [ '/home/container/node_modules/concat-map' ]
+48 silly reify mark retired [ '/home/container/node_modules/content-disposition' ]
+49 silly reify mark retired [ '/home/container/node_modules/content-type' ]
+50 silly reify mark retired [ '/home/container/node_modules/cookie' ]
+51 silly reify mark retired [ '/home/container/node_modules/cookie-signature' ]
+52 silly reify mark retired [ '/home/container/node_modules/debug' ]
+53 silly reify mark retired [ '/home/container/node_modules/depd' ]
+54 silly reify mark retired [ '/home/container/node_modules/destroy' ]
+55 silly reify mark retired [ '/home/container/node_modules/discord-interactions' ]
+56 silly reify mark retired [ '/home/container/node_modules/dunder-proto' ]
+57 silly reify mark retired [ '/home/container/node_modules/ee-first' ]
+58 silly reify mark retired [ '/home/container/node_modules/encodeurl' ]
+59 silly reify mark retired [ '/home/container/node_modules/es-define-property' ]
+60 silly reify mark retired [ '/home/container/node_modules/es-errors' ]
+61 silly reify mark retired [ '/home/container/node_modules/es-object-atoms' ]
+62 silly reify mark retired [ '/home/container/node_modules/escape-html' ]
+63 silly reify mark retired [ '/home/container/node_modules/etag' ]
+64 silly reify mark retired [ '/home/container/node_modules/express' ]
+65 silly reify mark retired [ '/home/container/node_modules/finalhandler' ]
+66 silly reify mark retired [ '/home/container/node_modules/fresh' ]
+67 silly reify mark retired [ '/home/container/node_modules/fill-range' ]
+68 silly reify mark retired [ '/home/container/node_modules/forwarded' ]
+69 silly reify mark retired [ '/home/container/node_modules/function-bind' ]
+70 silly reify mark retired [ '/home/container/node_modules/get-intrinsic' ]
+71 silly reify mark retired [ '/home/container/node_modules/get-proto' ]
+72 silly reify mark retired [ '/home/container/node_modules/glob-parent' ]
+73 silly reify mark retired [ '/home/container/node_modules/gopd' ]
+74 silly reify mark retired [ '/home/container/node_modules/has-flag' ]
+75 silly reify mark retired [ '/home/container/node_modules/has-symbols' ]
+76 silly reify mark retired [ '/home/container/node_modules/http-errors' ]
+77 silly reify mark retired [ '/home/container/node_modules/hasown' ]
+78 silly reify mark retired [ '/home/container/node_modules/iconv-lite' ]
+79 silly reify mark retired [ '/home/container/node_modules/ignore-by-default' ]
+80 silly reify mark retired [ '/home/container/node_modules/inherits' ]
+81 silly reify mark retired [ '/home/container/node_modules/ipaddr.js' ]
+82 silly reify mark retired [ '/home/container/node_modules/is-binary-path' ]
+83 silly reify mark retired [ '/home/container/node_modules/is-extglob' ]
+84 silly reify mark retired [ '/home/container/node_modules/is-glob' ]
+85 silly reify mark retired [ '/home/container/node_modules/is-number' ]
+86 silly reify mark retired [ '/home/container/node_modules/libsodium' ]
+87 silly reify mark retired [ '/home/container/node_modules/libsodium-wrappers' ]
+88 silly reify mark retired [ '/home/container/node_modules/math-intrinsics' ]
+89 silly reify mark retired [ '/home/container/node_modules/media-typer' ]
+90 silly reify mark retired [ '/home/container/node_modules/methods' ]
+91 silly reify mark retired [ '/home/container/node_modules/merge-descriptors' ]
+92 silly reify mark retired [ '/home/container/node_modules/minimatch' ]
+93 silly reify mark retired [ '/home/container/node_modules/ms' ]
+94 silly reify mark retired [ '/home/container/node_modules/mime-db' ]
+95 silly reify mark retired [ '/home/container/node_modules/mime-types' ]
+96 silly reify mark retired [ '/home/container/node_modules/negotiator' ]
+97 silly reify mark retired [
+97 silly reify   '/home/container/node_modules/nodemon',
+97 silly reify   '/home/container/node_modules/.bin/nodemon'
+97 silly reify ]
+98 silly reify mark retired [
+98 silly reify   '/home/container/node_modules/mime',
+98 silly reify   '/home/container/node_modules/.bin/mime'
+98 silly reify ]
+99 silly reify mark retired [ '/home/container/node_modules/normalize-path' ]
+100 silly reify mark retired [ '/home/container/node_modules/object-inspect' ]
+101 silly reify mark retired [ '/home/container/node_modules/on-finished' ]
+102 silly reify mark retired [ '/home/container/node_modules/parseurl' ]
+103 silly reify mark retired [ '/home/container/node_modules/path-to-regexp' ]
+104 silly reify mark retired [ '/home/container/node_modules/picomatch' ]
+105 silly reify mark retired [ '/home/container/node_modules/proxy-addr' ]
+106 silly reify mark retired [ '/home/container/node_modules/pstree.remy' ]
+107 silly reify mark retired [ '/home/container/node_modules/qs' ]
+108 silly reify mark retired [ '/home/container/node_modules/raw-body' ]
+109 silly reify mark retired [ '/home/container/node_modules/range-parser' ]
+110 silly reify mark retired [ '/home/container/node_modules/readdirp' ]
+111 silly reify mark retired [ '/home/container/node_modules/safe-buffer' ]
+112 silly reify mark retired [ '/home/container/node_modules/safer-buffer' ]
+113 silly reify mark retired [
+113 silly reify   '/home/container/node_modules/semver',
+113 silly reify   '/home/container/node_modules/.bin/semver'
+113 silly reify ]
+114 silly reify mark retired [ '/home/container/node_modules/send' ]
+115 silly reify mark retired [ '/home/container/node_modules/serve-static' ]
+116 silly reify mark retired [ '/home/container/node_modules/setprototypeof' ]
+117 silly reify mark retired [ '/home/container/node_modules/side-channel' ]
+118 silly reify mark retired [ '/home/container/node_modules/side-channel-list' ]
+119 silly reify mark retired [ '/home/container/node_modules/side-channel-map' ]
+120 silly reify mark retired [ '/home/container/node_modules/side-channel-weakmap' ]
+121 silly reify mark retired [ '/home/container/node_modules/simple-update-notifier' ]
+122 silly reify mark retired [ '/home/container/node_modules/statuses' ]
+123 silly reify mark retired [ '/home/container/node_modules/supports-color' ]
+124 silly reify mark retired [ '/home/container/node_modules/to-regex-range' ]
+125 silly reify mark retired [ '/home/container/node_modules/toidentifier' ]
+126 silly reify mark retired [
+126 silly reify   '/home/container/node_modules/touch',
+126 silly reify   '/home/container/node_modules/.bin/nodetouch'
+126 silly reify ]
+127 silly reify mark retired [ '/home/container/node_modules/type-is' ]
+128 silly reify mark retired [ '/home/container/node_modules/undefsafe' ]
+129 silly reify mark retired [ '/home/container/node_modules/unpipe' ]
+130 silly reify mark retired [ '/home/container/node_modules/utils-merge' ]
+131 silly reify mark retired [ '/home/container/node_modules/vary' ]
+132 silly reify mark retired [ '/home/container/node_modules/@discordjs/voice' ]
+133 silly reify mark retired [ '/home/container/node_modules/@snazzah/davey' ]
+134 silly reify mark retired [ '/home/container/node_modules/@snazzah/davey-win32-x64-msvc' ]
+135 silly reify moves {
+135 silly reify   '/home/container/node_modules/accepts': '/home/container/node_modules/.accepts-NVAvCwkD',
+135 silly reify   '/home/container/node_modules/anymatch': '/home/container/node_modules/.anymatch-NPPzkJYC',
+135 silly reify   '/home/container/node_modules/array-flatten': '/home/container/node_modules/.array-flatten-2GDXDLRW',
+135 silly reify   '/home/container/node_modules/balanced-match': '/home/container/node_modules/.balanced-match-RMyPnEyv',
+135 silly reify   '/home/container/node_modules/binary-extensions': '/home/container/node_modules/.binary-extensions-LG5rBOgs',
+135 silly reify   '/home/container/node_modules/body-parser': '/home/container/node_modules/.body-parser-0AN0Cr7e',
+135 silly reify   '/home/container/node_modules/brace-expansion': '/home/container/node_modules/.brace-expansion-oXZiDMfv',
+135 silly reify   '/home/container/node_modules/braces': '/home/container/node_modules/.braces-x1Rd1JVc',
+135 silly reify   '/home/container/node_modules/bytes': '/home/container/node_modules/.bytes-UtOpkFLL',
+135 silly reify   '/home/container/node_modules/call-bind-apply-helpers': '/home/container/node_modules/.call-bind-apply-helpers-RF3wBrIj',
+135 silly reify   '/home/container/node_modules/call-bound': '/home/container/node_modules/.call-bound-Lb95ssZx',
+135 silly reify   '/home/container/node_modules/chokidar': '/home/container/node_modules/.chokidar-BCHwrxHr',
+135 silly reify   '/home/container/node_modules/concat-map': '/home/container/node_modules/.concat-map-LW1qSY34',
+135 silly reify   '/home/container/node_modules/content-disposition': '/home/container/node_modules/.content-disposition-EII1qCCb',
+135 silly reify   '/home/container/node_modules/content-type': '/home/container/node_modules/.content-type-nYlp3v6E',
+135 silly reify   '/home/container/node_modules/cookie': '/home/container/node_modules/.cookie-UUT9HoAW',
+135 silly reify   '/home/container/node_modules/cookie-signature': '/home/container/node_modules/.cookie-signature-2m1pp2Aq',
+135 silly reify   '/home/container/node_modules/debug': '/home/container/node_modules/.debug-94G7iWjh',
+135 silly reify   '/home/container/node_modules/depd': '/home/container/node_modules/.depd-FpRqAxEu',
+135 silly reify   '/home/container/node_modules/destroy': '/home/container/node_modules/.destroy-Pm5h7Plx',
+135 silly reify   '/home/container/node_modules/discord-interactions': '/home/container/node_modules/.discord-interactions-INIQSsIO',
+135 silly reify   '/home/container/node_modules/dunder-proto': '/home/container/node_modules/.dunder-proto-IHAxp8EO',
+135 silly reify   '/home/container/node_modules/ee-first': '/home/container/node_modules/.ee-first-gOVgHksK',
+135 silly reify   '/home/container/node_modules/encodeurl': '/home/container/node_modules/.encodeurl-URQpPQYy',
+135 silly reify   '/home/container/node_modules/es-define-property': '/home/container/node_modules/.es-define-property-7duVhtai',
+135 silly reify   '/home/container/node_modules/es-errors': '/home/container/node_modules/.es-errors-OVBV4Qqo',
+135 silly reify   '/home/container/node_modules/es-object-atoms': '/home/container/node_modules/.es-object-atoms-BO2zJebW',
+135 silly reify   '/home/container/node_modules/escape-html': '/home/container/node_modules/.escape-html-fJm62NJl',
+135 silly reify   '/home/container/node_modules/etag': '/home/container/node_modules/.etag-fYbu7R72',
+135 silly reify   '/home/container/node_modules/express': '/home/container/node_modules/.express-7QYPUHOb',
+135 silly reify   '/home/container/node_modules/finalhandler': '/home/container/node_modules/.finalhandler-mGWX2aCn',
+135 silly reify   '/home/container/node_modules/fresh': '/home/container/node_modules/.fresh-CZKXi4J9',
+135 silly reify   '/home/container/node_modules/fill-range': '/home/container/node_modules/.fill-range-VSY7ODEK',
+135 silly reify   '/home/container/node_modules/forwarded': '/home/container/node_modules/.forwarded-GIZsbK74',
+135 silly reify   '/home/container/node_modules/function-bind': '/home/container/node_modules/.function-bind-zjigk9QD',
+135 silly reify   '/home/container/node_modules/get-intrinsic': '/home/container/node_modules/.get-intrinsic-RatCNsbT',
+135 silly reify   '/home/container/node_modules/get-proto': '/home/container/node_modules/.get-proto-KhfpEC9M',
+135 silly reify   '/home/container/node_modules/glob-parent': '/home/container/node_modules/.glob-parent-2kwNCkc7',
+135 silly reify   '/home/container/node_modules/gopd': '/home/container/node_modules/.gopd-ZBPR0T2f',
+135 silly reify   '/home/container/node_modules/has-flag': '/home/container/node_modules/.has-flag-gfDdOkl6',
+135 silly reify   '/home/container/node_modules/has-symbols': '/home/container/node_modules/.has-symbols-1HQ4VRpS',
+135 silly reify   '/home/container/node_modules/http-errors': '/home/container/node_modules/.http-errors-LLPddpyc',
+135 silly reify   '/home/container/node_modules/hasown': '/home/container/node_modules/.hasown-vno1R6WA',
+135 silly reify   '/home/container/node_modules/iconv-lite': '/home/container/node_modules/.iconv-lite-Qylac7Ri',
+135 silly reify   '/home/container/node_modules/ignore-by-default': '/home/container/node_modules/.ignore-by-default-roio9pVR',
+135 silly reify   '/home/container/node_modules/inherits': '/home/container/node_modules/.inherits-jDmm7Yts',
+135 silly reify   '/home/container/node_modules/ipaddr.js': '/home/container/node_modules/.ipaddr.js-9IQimalG',
+135 silly reify   '/home/container/node_modules/is-binary-path': '/home/container/node_modules/.is-binary-path-GnYf9msK',
+135 silly reify   '/home/container/node_modules/is-extglob': '/home/container/node_modules/.is-extglob-XVEK6b8N',
+135 silly reify   '/home/container/node_modules/is-glob': '/home/container/node_modules/.is-glob-lJtIUMtg',
+135 silly reify   '/home/container/node_modules/is-number': '/home/container/node_modules/.is-number-4DAexwtD',
+135 silly reify   '/home/container/node_modules/libsodium': '/home/container/node_modules/.libsodium-ELpaVGWv',
+135 silly reify   '/home/container/node_modules/libsodium-wrappers': '/home/container/node_modules/.libsodium-wrappers-p2ZWlbrp',
+135 silly reify   '/home/container/node_modules/math-intrinsics': '/home/container/node_modules/.math-intrinsics-NU83bS7Q',
+135 silly reify   '/home/container/node_modules/media-typer': '/home/container/node_modules/.media-typer-CgKaWnbp',
+135 silly reify   '/home/container/node_modules/methods': '/home/container/node_modules/.methods-X5yIm3Ud',
+135 silly reify   '/home/container/node_modules/merge-descriptors': '/home/container/node_modules/.merge-descriptors-VCNppGr7',
+135 silly reify   '/home/container/node_modules/minimatch': '/home/container/node_modules/.minimatch-rElEqhmg',
+135 silly reify   '/home/container/node_modules/ms': '/home/container/node_modules/.ms-bURo7Vup',
+135 silly reify   '/home/container/node_modules/mime-db': '/home/container/node_modules/.mime-db-5E7UY8yv',
+135 silly reify   '/home/container/node_modules/mime-types': '/home/container/node_modules/.mime-types-Lry5hG6C',
+135 silly reify   '/home/container/node_modules/negotiator': '/home/container/node_modules/.negotiator-fBK2IoNo',
+135 silly reify   '/home/container/node_modules/nodemon': '/home/container/node_modules/.nodemon-4Mpe9Z9R',
+135 silly reify   '/home/container/node_modules/.bin/nodemon': '/home/container/node_modules/.bin/.nodemon-fIFrvQqG',
+135 silly reify   '/home/container/node_modules/mime': '/home/container/node_modules/.mime-OqpHjQqc',
+135 silly reify   '/home/container/node_modules/.bin/mime': '/home/container/node_modules/.bin/.mime-eoW5cL08',
+135 silly reify   '/home/container/node_modules/normalize-path': '/home/container/node_modules/.normalize-path-d42wZ9lU',
+135 silly reify   '/home/container/node_modules/object-inspect': '/home/container/node_modules/.object-inspect-cHlkwiiP',
+135 silly reify   '/home/container/node_modules/on-finished': '/home/container/node_modules/.on-finished-IagXYwiX',
+135 silly reify   '/home/container/node_modules/parseurl': '/home/container/node_modules/.parseurl-NdrIj9cl',
+135 silly reify   '/home/container/node_modules/path-to-regexp': '/home/container/node_modules/.path-to-regexp-pEgZ25cP',
+135 silly reify   '/home/container/node_modules/picomatch': '/home/container/node_modules/.picomatch-1nleh6Td',
+135 silly reify   '/home/container/node_modules/proxy-addr': '/home/container/node_modules/.proxy-addr-XJNa9wFv',
+135 silly reify   '/home/container/node_modules/pstree.remy': '/home/container/node_modules/.pstree.remy-hGCKTqTY',
+135 silly reify   '/home/container/node_modules/qs': '/home/container/node_modules/.qs-amBmjPgc',
+135 silly reify   '/home/container/node_modules/raw-body': '/home/container/node_modules/.raw-body-PxLRaGMN',
+135 silly reify   '/home/container/node_modules/range-parser': '/home/container/node_modules/.range-parser-m135UGbv',
+135 silly reify   '/home/container/node_modules/readdirp': '/home/container/node_modules/.readdirp-WFAbIqvp',
+135 silly reify   '/home/container/node_modules/safe-buffer': '/home/container/node_modules/.safe-buffer-RulgivU5',
+135 silly reify   '/home/container/node_modules/safer-buffer': '/home/container/node_modules/.safer-buffer-rTDybRGv',
+135 silly reify   '/home/container/node_modules/semver': '/home/container/node_modules/.semver-clkkOKMn',
+135 silly reify   '/home/container/node_modules/.bin/semver': '/home/container/node_modules/.bin/.semver-6FrAJfdb',
+135 silly reify   '/home/container/node_modules/send': '/home/container/node_modules/.send-KoCqOMry',
+135 silly reify   '/home/container/node_modules/serve-static': '/home/container/node_modules/.serve-static-tqGr6ktZ',
+135 silly reify   '/home/container/node_modules/setprototypeof': '/home/container/node_modules/.setprototypeof-ajnTWfI4',
+135 silly reify   '/home/container/node_modules/side-channel': '/home/container/node_modules/.side-channel-6QhLGc6g',
+135 silly reify   '/home/container/node_modules/side-channel-list': '/home/container/node_modules/.side-channel-list-nvFjDztw',
+135 silly reify   '/home/container/node_modules/side-channel-map': '/home/container/node_modules/.side-channel-map-vwrmCbpQ',
+135 silly reify   '/home/container/node_modules/side-channel-weakmap': '/home/container/node_modules/.side-channel-weakmap-Mee212gm',
+135 silly reify   '/home/container/node_modules/simple-update-notifier': '/home/container/node_modules/.simple-update-notifier-8gxg3DU9',
+135 silly reify   '/home/container/node_modules/statuses': '/home/container/node_modules/.statuses-fG9psCe1',
+135 silly reify   '/home/container/node_modules/supports-color': '/home/container/node_modules/.supports-color-HSgU8iRN',
+135 silly reify   '/home/container/node_modules/to-regex-range': '/home/container/node_modules/.to-regex-range-SprpUeDv',
+135 silly reify   '/home/container/node_modules/toidentifier': '/home/container/node_modules/.toidentifier-v3g0V6gL',
+135 silly reify   '/home/container/node_modules/touch': '/home/container/node_modules/.touch-bPayF5RA',
+135 silly reify   '/home/container/node_modules/.bin/nodetouch': '/home/container/node_modules/.bin/.nodetouch-Ff5PEFQc',
+135 silly reify   '/home/container/node_modules/type-is': '/home/container/node_modules/.type-is-qydqyq0h',
+135 silly reify   '/home/container/node_modules/undefsafe': '/home/container/node_modules/.undefsafe-rVnPOAt0',
+135 silly reify   '/home/container/node_modules/unpipe': '/home/container/node_modules/.unpipe-ZL0UGego',
+135 silly reify   '/home/container/node_modules/utils-merge': '/home/container/node_modules/.utils-merge-Ro3GbX6o',
+135 silly reify   '/home/container/node_modules/vary': '/home/container/node_modules/.vary-vuBP7dBz',
+135 silly reify   '/home/container/node_modules/@discordjs/voice': '/home/container/node_modules/@discordjs/.voice-KV5Q0asj',
+135 silly reify   '/home/container/node_modules/@snazzah/davey': '/home/container/node_modules/@snazzah/.davey-10vsNw1D',
+135 silly reify   '/home/container/node_modules/@snazzah/davey-win32-x64-msvc': '/home/container/node_modules/@snazzah/.davey-win32-x64-msvc-kxXVL9rZ'
+135 silly reify }
+136 silly audit bulk request {
+136 silly audit   '@discordjs/builders': [ '1.14.1' ],
+136 silly audit   '@discordjs/collection': [ '1.5.3', '2.1.1' ],
+136 silly audit   '@discordjs/formatters': [ '0.6.2' ],
+136 silly audit   '@discordjs/rest': [ '2.6.1' ],
+136 silly audit   '@sapphire/snowflake': [ '3.5.5', '3.5.3' ],
+136 silly audit   '@discordjs/util': [ '1.2.0' ],
+136 silly audit   '@discordjs/ws': [ '1.2.3' ],
+136 silly audit   '@sapphire/async-queue': [ '1.5.5' ],
+136 silly audit   '@sapphire/shapeshift': [ '4.0.0' ],
+136 silly audit   '@types/node': [ '25.9.1' ],
+136 silly audit   '@types/ws': [ '8.18.1' ],
+136 silly audit   '@vladfrangu/async_event_emitter': [ '2.4.7' ],
+136 silly audit   'discord-api-types': [ '0.38.47', '0.37.83' ],
+136 silly audit   'discord.js': [ '14.26.4' ],
+136 silly audit   dotenv: [ '16.6.1' ],
+136 silly audit   'fast-deep-equal': [ '3.1.3' ],
+136 silly audit   lodash: [ '4.18.1' ],
+136 silly audit   'lodash.snakecase': [ '4.1.1' ],
+136 silly audit   'magic-bytes.js': [ '1.13.0' ],
+136 silly audit   'prism-media': [ '1.3.5' ],
+136 silly audit   'ts-mixer': [ '6.0.4' ],
+136 silly audit   tslib: [ '2.8.1' ],
+136 silly audit   undici: [ '6.24.1' ],
+136 silly audit   'undici-types': [ '7.24.6' ],
+136 silly audit   ws: [ '8.21.0' ],
+136 silly audit   '@discordjs/voice': [ '0.17.0' ],
+136 silly audit   'libsodium-wrappers': [ '0.7.16' ],
+136 silly audit   libsodium: [ '0.7.16' ]
+136 silly audit }
+137 http cache libsodium-wrappers@https://registry.npmjs.org/libsodium-wrappers/-/libsodium-wrappers-0.7.16.tgz 0ms (cache hit)
+138 http cache @discordjs/voice@https://registry.npmjs.org/@discordjs/voice/-/voice-0.17.0.tgz 0ms (cache hit)
+139 http cache libsodium@https://registry.npmjs.org/libsodium/-/libsodium-0.7.16.tgz 0ms (cache hit)
+140 http cache discord-api-types@https://registry.npmjs.org/discord-api-types/-/discord-api-types-0.37.83.tgz 0ms (cache hit)
+141 silly tarball no local data for libsodium-wrappers@https://registry.npmjs.org/libsodium-wrappers/-/libsodium-wrappers-0.7.16.tgz. Extracting by manifest.
+142 silly tarball no local data for @discordjs/voice@https://registry.npmjs.org/@discordjs/voice/-/voice-0.17.0.tgz. Extracting by manifest.
+143 silly tarball no local data for libsodium@https://registry.npmjs.org/libsodium/-/libsodium-0.7.16.tgz. Extracting by manifest.
+144 silly tarball no local data for discord-api-types@https://registry.npmjs.org/discord-api-types/-/discord-api-types-0.37.83.tgz. Extracting by manifest.
+145 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 147ms
+146 silly audit report {
+146 silly audit report   undici: [
+146 silly audit report     {
+146 silly audit report       id: 1130716,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-8xcm-r25x-g524',
+146 silly audit report       title: 'undici vulnerable to downstream response desynchronization via retry interceptor',
+146 silly audit report       severity: 'moderate',
+146 silly audit report       vulnerable_versions: '<6.28.0',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     },
+146 silly audit report     {
+146 silly audit report       id: 1130727,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-m8rv-5g2x-5cg5',
+146 silly audit report       title: "undici vulnerable to CRLF Injection via blob-like body 'type' property",
+146 silly audit report       severity: 'moderate',
+146 silly audit report       vulnerable_versions: '<6.28.0',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     },
+146 silly audit report     {
+146 silly audit report       id: 1130732,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-v3r7-h72x-cjcm',
+146 silly audit report       title: 'undici vulnerable to cookie attribute injection via unsanitized domain and unparsed setCookie fields',
+146 silly audit report       severity: 'moderate',
+146 silly audit report       vulnerable_versions: '<6.28.0',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     },
+146 silly audit report     {
+146 silly audit report       id: 1121242,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-p88m-4jfj-68fv',
+146 silly audit report       title: 'undici vulnerable to HTTP header injection via Set-Cookie percent-decoding',
+146 silly audit report       severity: 'moderate',
+146 silly audit report       vulnerable_versions: '<6.27.0',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     },
+146 silly audit report     {
+146 silly audit report       id: 1121245,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-vxpw-j846-p89q',
+146 silly audit report       title: 'undici WebSocket client vulnerable to denial of service via fragment count bypass',
+146 silly audit report       severity: 'high',
+146 silly audit report       vulnerable_versions: '<6.27.0',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     },
+146 silly audit report     {
+146 silly audit report       id: 1121255,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-g8m3-5g58-fq7m',
+146 silly audit report       title: 'undici vulnerable to Set-Cookie SameSite attribute downgrade via permissive substring matching',
+146 silly audit report       severity: 'low',
+146 silly audit report       vulnerable_versions: '<6.27.0',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     },
+146 silly audit report     {
+146 silly audit report       id: 1137243,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-35p6-xmwp-9g52',
+146 silly audit report       title: 'undici vulnerable to HTTP response queue poisoning via keep-alive socket reuse',
+146 silly audit report       severity: 'low',
+146 silly audit report       vulnerable_versions: '<6.27.0',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     },
+146 silly audit report     {
+146 silly audit report       id: 1240039,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-r53p-7pc4-xj5r',
+146 silly audit report       title: 'undici vulnerable to downstream response splitting via retry interceptor',
+146 silly audit report       severity: 'low',
+146 silly audit report       vulnerable_versions: '<6.28.1',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     },
+146 silly audit report     {
+146 silly audit report       id: 1240042,
+146 silly audit report       url: 'https://github.com/advisories/GHSA-rfgv-xxqx-mfg5',
+146 silly audit report       title: 'undici vulnerable to Denial of Service via unrequested WebSocket subprotocol',
+146 silly audit report       severity: 'high',
+146 silly audit report       vulnerable_versions: '>=6.7.0 <6.28.1',
+146 silly audit report       cwe: [Array],
+146 silly audit report       cvss: [Object]
+146 silly audit report     }
+146 silly audit report   ]
+146 silly audit report }
+147 silly packumentCache corgi:https://registry.npmjs.org/undici cache-miss
+148 http fetch GET 200 https://registry.npmjs.org/libsodium-wrappers/-/libsodium-wrappers-0.7.16.tgz 189ms (cache miss)
+149 http fetch GET 200 https://registry.npmjs.org/undici 347ms (cache miss)
+150 silly packumentCache corgi:https://registry.npmjs.org/undici set size:undefined disposed:false
+151 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2frest cache-miss
+152 silly packumentCache corgi:https://registry.npmjs.org/discord.js cache-miss
+153 http fetch GET 200 https://registry.npmjs.org/@discordjs/voice/-/voice-0.17.0.tgz 1335ms (cache miss)
+154 warn deprecated @discordjs/voice@0.17.0: This version uses deprecated encryption modes. Please use a newer version.
+155 http fetch GET 200 https://registry.npmjs.org/libsodium/-/libsodium-0.7.16.tgz 1426ms (cache miss)
+156 http fetch GET 200 https://registry.npmjs.org/@discordjs%2frest 807ms (cache miss)
+157 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2frest set size:undefined disposed:false
+158 http fetch GET 200 https://registry.npmjs.org/discord.js 1546ms (cache miss)
+159 silly packumentCache corgi:https://registry.npmjs.org/discord.js set size:undefined disposed:false
+160 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fws cache-miss
+161 http fetch GET 200 https://registry.npmjs.org/@discordjs%2fws 3558ms (cache miss)
+162 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fws set size:undefined disposed:false
+163 http fetch GET 200 https://registry.npmjs.org/discord-api-types/-/discord-api-types-0.37.83.tgz 9119ms (cache miss)
+164 silly REMOVE node_modules/@snazzah/davey-win32-x64-msvc
+165 silly REMOVE node_modules/@snazzah/davey
+166 silly CHANGE node_modules/@discordjs/voice
+167 silly ADD node_modules/@discordjs/voice/node_modules/discord-api-types
+168 silly REMOVE node_modules/vary
+169 silly REMOVE node_modules/utils-merge
+170 silly REMOVE node_modules/unpipe
+171 silly REMOVE node_modules/undefsafe
+172 silly REMOVE node_modules/type-is
+173 silly REMOVE node_modules/touch
+174 silly REMOVE node_modules/toidentifier
+175 silly REMOVE node_modules/to-regex-range
+176 silly REMOVE node_modules/supports-color
+177 silly REMOVE node_modules/statuses
+178 silly REMOVE node_modules/simple-update-notifier
+179 silly REMOVE node_modules/side-channel-weakmap
+180 silly REMOVE node_modules/side-channel-map
+181 silly REMOVE node_modules/side-channel-list
+182 silly REMOVE node_modules/side-channel
+183 silly REMOVE node_modules/setprototypeof
+184 silly REMOVE node_modules/serve-static
+185 silly REMOVE node_modules/send
+186 silly REMOVE node_modules/send/node_modules/ms
+187 silly REMOVE node_modules/send/node_modules/encodeurl
+188 silly REMOVE node_modules/semver
+189 silly REMOVE node_modules/safer-buffer
+190 silly REMOVE node_modules/safe-buffer
+191 silly REMOVE node_modules/readdirp
+192 silly REMOVE node_modules/range-parser
+193 silly REMOVE node_modules/raw-body
+194 silly REMOVE node_modules/qs
+195 silly REMOVE node_modules/pstree.remy
+196 silly REMOVE node_modules/proxy-addr
+197 silly REMOVE node_modules/picomatch
+198 silly REMOVE node_modules/path-to-regexp
+199 silly REMOVE node_modules/parseurl
+200 silly REMOVE node_modules/on-finished
+201 silly REMOVE node_modules/object-inspect
+202 silly REMOVE node_modules/normalize-path
+203 silly REMOVE node_modules/mime
+204 silly REMOVE node_modules/nodemon
+205 silly REMOVE node_modules/nodemon/node_modules/ms
+206 silly REMOVE node_modules/nodemon/node_modules/debug
+207 silly REMOVE node_modules/negotiator
+208 silly REMOVE node_modules/mime-types
+209 silly REMOVE node_modules/mime-db
+210 silly REMOVE node_modules/ms
+211 silly REMOVE node_modules/minimatch
+212 silly REMOVE node_modules/merge-descriptors
+213 silly REMOVE node_modules/methods
+214 silly REMOVE node_modules/media-typer
+215 silly REMOVE node_modules/math-intrinsics
+216 silly CHANGE node_modules/libsodium-wrappers
+217 silly CHANGE node_modules/libsodium
+218 silly REMOVE node_modules/is-number
+219 silly REMOVE node_modules/is-glob
+220 silly REMOVE node_modules/is-extglob
+221 silly REMOVE node_modules/is-binary-path
+222 silly REMOVE node_modules/ipaddr.js
+223 silly REMOVE node_modules/inherits
+224 silly REMOVE node_modules/ignore-by-default
+225 silly REMOVE node_modules/iconv-lite
+226 silly REMOVE node_modules/hasown
+227 silly REMOVE node_modules/http-errors
+228 silly REMOVE node_modules/has-symbols
+229 silly REMOVE node_modules/has-flag
+230 silly REMOVE node_modules/gopd
+231 silly REMOVE node_modules/glob-parent
+232 silly REMOVE node_modules/get-proto
+233 silly REMOVE node_modules/get-intrinsic
+234 silly REMOVE node_modules/function-bind
+235 silly REMOVE node_modules/forwarded
+236 silly REMOVE node_modules/fill-range
+237 silly REMOVE node_modules/fresh
+238 silly REMOVE node_modules/finalhandler
+239 silly REMOVE node_modules/express
+240 silly REMOVE node_modules/etag
+241 silly REMOVE node_modules/escape-html
+242 silly REMOVE node_modules/es-object-atoms
+243 silly REMOVE node_modules/es-errors
+244 silly REMOVE node_modules/es-define-property
+245 silly REMOVE node_modules/encodeurl
+246 silly REMOVE node_modules/ee-first
+247 silly REMOVE node_modules/dunder-proto
+248 silly REMOVE node_modules/discord-interactions
+249 silly REMOVE node_modules/destroy
+250 silly REMOVE node_modules/depd
+251 silly REMOVE node_modules/debug
+252 silly REMOVE node_modules/cookie-signature
+253 silly REMOVE node_modules/cookie
+254 silly REMOVE node_modules/content-type
+255 silly REMOVE node_modules/content-disposition
+256 silly REMOVE node_modules/concat-map
+257 silly REMOVE node_modules/chokidar
+258 silly REMOVE node_modules/call-bound
+259 silly REMOVE node_modules/call-bind-apply-helpers
+260 silly REMOVE node_modules/bytes
+261 silly REMOVE node_modules/braces
+262 silly REMOVE node_modules/brace-expansion
+263 silly REMOVE node_modules/body-parser
+264 silly REMOVE node_modules/binary-extensions
+265 silly REMOVE node_modules/balanced-match
+266 silly REMOVE node_modules/array-flatten
+267 silly REMOVE node_modules/anymatch
+268 silly REMOVE node_modules/accepts
+269 verbose cwd /home/container
+270 verbose os Linux 6.12.111+deb13-amd64
+271 verbose node v25.9.0
+272 verbose npm  v11.17.0
+273 notice
+273 notice New [33mminor[39m version of npm available! [33m11.17.0[39m -> [34m11.21.0[39m
+273 notice Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.21.0[39m
+273 notice To update run: [4mnpm install -g npm@11.21.0[24m
+273 notice  { force: true, Symbol(proc-log.meta): true }
+274 verbose exit 0
+275 info ok

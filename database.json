@@ -1,9 +1,4 @@
 {
-    "GLOBAL_INFRASTRUCTURE_STATE": {
-        "SYSTEM_LOCKDOWN_ACTIVE": false,
-        "LAST_LOCKDOWN_TIMESTAMP": null,
-        "LAST_COMMANDER_ID": null
-    },
     "1458387955482624083": {
         "vcChannel": "1479831542330298530"
     },
@@ -16,7 +11,8 @@
         "protectionModules": {
             "antiSpamActive": true,
             "antiLinkActive": true
-        }
+        },
+        "logChannel": "1522554280618364948"
     },
     "1544296446981832744": {
         "vcChannel": "1544296448110370826"
