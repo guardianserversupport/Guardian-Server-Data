@@ -15,6 +15,7 @@ hingga protokol karantina global (lockdown) yang persisten.
 | --- | --- |
 | 🛡️ **Anti-Link Protocol** | Deteksi & hapus otomatis pesan berisi URL / undangan Discord ilegal (kecuali Owner & Administrator). |
 | 🛡️ **Anti-Spam Protocol** | Deteksi pesan flood & sistem strike (timeout bertingkat); **tidak aktif otomatis** — hanya aktif jika diaktifkan via `/protection`. |
+| 🤖 **Bot Catcher** | Designate a channel where any user message triggers a direct message and kick attempt. The configured security log records the result, and the panel shows that server's total successful Bot Catcher kicks. Messages from the previous 10 minutes are deleted only in that server's message-enabled channels and threads. |
 | 📦 **Disaster Recovery** | Snapshot arsitektur server (channel + role + permission) lalu restore kapan saja. Maks. 5 backup/server. |
 | 🔐 **Verification Gateway** | Panel tombol VERIFY; memberi role otomatis dan menyinkronkan nickname menjadi `[MEMBER] ...`. |
 | 👋 **Welcome / Goodbye UI** | Embed otomatis saat member masuk/keluar server. |
@@ -69,9 +70,10 @@ Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertam
 | Perintah | Izin | Fungsi |
 | --- | --- | --- |
 | `/protection module:anti_link\|anti_spam` | Administrator | **Mengaktifkan** modul proteksi (Anti-Link / Anti-Spam) di server — cukup kirim perintah ini, modul otomatis aktif. Untuk **menonaktifkan** gunakan `/disable module:anti_link\|anti_spam`. Modul proteksi **tidak pernah aktif otomatis** saat bot bergabung ke server. |
+| `/protection module:bot_catcher channel:<#channel>` | Administrator | Enables the Bot Catcher in the selected channel. Kick results are reported to the configured `log` channel and successful kicks are added to that server's counter. Messages from the previous 10 minutes are deleted only in the server where the violation happened. Disable it with `/disable module:bot_catcher`. |
 | `/set feature:<...> channel:<#channel> [role]` | Owner + Administrator | Menautkan fitur ke channel: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`. |
 | `/set feature:support_panel channel:<#channel>` | Moderator / Owner | Deploy panel Support Center ke channel (Private Thread ticket dibuat dari channel ini). |
-| `/disable module:<...>` | Owner + Administrator | Menonaktifkan modul yang sudah di-*set* / di-*protection* dan menghapus konfigurasinya dari database (module: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`, `support_panel`, `anti_link`, `anti_spam`). Aksi tetap tercatat di History Database. |
+| `/disable module:<...>` | Owner + Administrator | Menonaktifkan modul yang sudah di-*set* / di-*protection* dan menghapus konfigurasinya dari database (module: `welcome`, `goodbye`, `verify`, `log`, `vc`, `status_server`, `support_panel`, `anti_link`, `anti_spam`, `bot_catcher`). Aksi tetap tercatat di History Database. |
 | `/snapshot create` | Owner + Administrator | Membuat backup penuh arsitektur server. |
 | `/snapshot list` | Owner + Administrator | Menampilkan daftar snapshot yang tersimpan. |
 | `/snapshot restore <snapshot_id>` | Owner + Administrator | ⚠️ Merekonstruksi ulang channel & role dari snapshot (diproses di latar belakang). |
@@ -113,7 +115,7 @@ Bot akan otomatis menyinkronkan seluruh **Slash Command** ke Discord saat pertam
 
 ### Penyimpanan Data
 - **`database.json`** — menyimpan konfigurasi tiap server (welcome channel, verify role,
-  log channel, vc channel, status channels, modul proteksi, dan state lockdown global).
+  log channel, vc channel, status channels, modul proteksi termasuk Bot Catcher, dan state lockdown global).
 - **`History Databases.json`** — log audit forensik setiap perubahan konfigurasi.
 - **`Backup_Matrix.json`** — arsip snapshot disaster recovery (maks. 5 per server).
 

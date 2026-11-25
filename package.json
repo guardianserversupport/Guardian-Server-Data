@@ -4,7 +4,7 @@
   "description": "Guardian Server - Advanced Discord Management Engine",
   "main": "index.js",
   "scripts": {
-    "start": "node --max-old-space-size=380 --gc-interval=100 Index.js"
+    "start": "node --max-old-space-size=380 --gc-interval=100 index.js"
   },
   "engines": {
     "node": ">=25.0.0"

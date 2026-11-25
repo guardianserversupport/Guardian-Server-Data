@@ -24,6 +24,30 @@
         "lastKnownConfigurator": "1280789307027755019",
         "historyLogs": [
             {
+                "logId": "8127AD29",
+                "actionTrace": "SET_SECURITY_TELEMETRY_LOG",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "1522554280618364948",
+                "timestampStr": "25 November 2026 pukul 19.11.08 WIB",
+                "unixEpochMs": 1795608668034
+            },
+            {
+                "logId": "EE8160D0",
+                "actionTrace": "SET_PROTECTION_BOT_CATCHER_MODULE",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "ACTIVE | Channel: 1575036184084742154",
+                "timestampStr": "25 November 2026 pukul 18.58.09 WIB",
+                "unixEpochMs": 1795607889778
+            },
+            {
+                "logId": "81C04467",
+                "actionTrace": "SET_PROTECTION_BOT_CATCHER_MODULE",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "ACTIVE | Channel: 1575036184084742154",
+                "timestampStr": "25 November 2026 pukul 13.31.40 WIB",
+                "unixEpochMs": 1795588300784
+            },
+            {
                 "logId": "3A0EFD8D",
                 "actionTrace": "SET_SECURITY_TELEMETRY_LOG",
                 "commanderId": "1280789307027755019",

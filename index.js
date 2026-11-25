@@ -82,6 +82,189 @@
     // Anti-Spam Module: Message flood observation window & trigger limit
     const SPAM_FLOOD_WINDOW_MS = 5 * 1000;  // Observation window (5 seconds)
     const SPAM_FLOOD_LIMIT = 5;             // Messages allowed inside the window before a strike is issued
+    const BOT_CATCHER_RETENTION_MS = 10 * 60 * 1000;
+    const botCatcherGuildQueues = new Map();
+    const botCatcherPanelQueues = new Map();
+    const botCatcherPendingMembers = new Set();
+
+    function buildBotCatcherPanelEmbed(kickCount = 0) {
+        return new EmbedBuilder()
+            .setColor('#FF0033')
+            .setTitle('🚫 DO NOT CHAT IN THIS CHANNEL')
+            .setDescription('This channel is reserved for bot catching. Any message sent here will result in an automatic kick from the server.')
+            .addFields({
+                name: 'Members Kicked in This Server',
+                value: `\`${kickCount}\``,
+                inline: true
+            })
+            .setFooter({ text: 'Guardian Server • Bot Catcher' });
+    }
+
+    async function upsertBotCatcherPanelNow(channel, protectionData, kickCount) {
+        let existingPanel = null;
+        if (protectionData.botCatcherPanelMessageId) {
+            try {
+                existingPanel = await channel.messages.fetch(protectionData.botCatcherPanelMessageId);
+            } catch (panelError) {
+                if (Number(panelError.code) !== 10008) {
+                    throw panelError;
+                }
+                console.warn(`⚠️ [BOT_CATCHER_PANEL_WARN] Saved panel ${protectionData.botCatcherPanelMessageId} no longer exists; creating a replacement.`);
+            }
+        }
+
+        const recentMessages = await channel.messages.fetch({ limit: 100 });
+        const botCatcherPanels = recentMessages.filter(message =>
+            message.author.id === client.user.id &&
+            message.embeds.some(embed =>
+                embed.title === '🚫 DO NOT CHAT IN THIS CHANNEL' &&
+                embed.footer?.text === 'Guardian Server • Bot Catcher'
+            )
+        );
+
+        if (!existingPanel && botCatcherPanels.size > 0) {
+            existingPanel = botCatcherPanels.first();
+        }
+
+        if (existingPanel) {
+            await existingPanel.edit({ embeds: [buildBotCatcherPanelEmbed(kickCount)] });
+            for (const duplicatePanel of botCatcherPanels.values()) {
+                if (duplicatePanel.id !== existingPanel.id) {
+                    try {
+                        await duplicatePanel.delete();
+                    } catch (deleteError) {
+                        console.warn(`⚠️ [BOT_CATCHER_PANEL_WARN] Could not remove duplicate panel ${duplicatePanel.id}: ${deleteError.message}`);
+                    }
+                }
+            }
+            return existingPanel;
+        }
+
+        return channel.send({ embeds: [buildBotCatcherPanelEmbed(kickCount)] });
+    }
+
+    async function upsertBotCatcherPanel(channel, protectionData, kickCount) {
+        const previousPanelTask = botCatcherPanelQueues.get(channel.id) || Promise.resolve();
+        const currentPanelTask = previousPanelTask
+            .catch(queueError => {
+                console.error(`🔴 [BOT_CATCHER_PANEL_QUEUE_ERROR] Previous panel update failed in channel ${channel.id}: ${queueError.message}`);
+            })
+            .then(() => upsertBotCatcherPanelNow(channel, protectionData, kickCount));
+
+        botCatcherPanelQueues.set(channel.id, currentPanelTask);
+        try {
+            return await currentPanelTask;
+        } finally {
+            if (botCatcherPanelQueues.get(channel.id) === currentPanelTask) {
+                botCatcherPanelQueues.delete(channel.id);
+            }
+        }
+    }
+
+    async function sendBotCatcherSecurityLog(guild, logChannelId, member, triggerChannel, kickCount, kickErrorMessage) {
+        if (!logChannelId) {
+            console.warn(`⚠️ [BOT_CATCHER_LOG_WARN] No security log channel is configured for server ${guild.id}.`);
+            return;
+        }
+
+        try {
+            const logChannel = await guild.channels.fetch(logChannelId);
+            if (!logChannel || !logChannel.isTextBased() || typeof logChannel.send !== 'function') {
+                console.warn(`⚠️ [BOT_CATCHER_LOG_WARN] Configured security log channel ${logChannelId} is unavailable or cannot receive messages.`);
+                return;
+            }
+
+            const logEmbed = new EmbedBuilder()
+                .setColor('#FF0033')
+                .setTitle(kickErrorMessage ? '⚠️ BOT CATCHER: KICK FAILED' : '🤖 BOT CATCHER: MEMBER KICKED')
+                .setDescription(kickErrorMessage
+                    ? `Bot Catcher detected **${member.user.tag}** (\`${member.id}\`) sending a message, but the member could not be kicked.`
+                    : `**${member.user.tag}** (\`${member.id}\`) has left the server after sending a message in the Bot Catcher channel.`)
+                .addFields(
+                    { name: 'Server', value: guild.name, inline: true },
+                    { name: 'Bot Catcher Channel', value: `<#${triggerChannel.id}>`, inline: true },
+                    { name: 'Total Bot Catcher Kicks', value: `\`${kickCount}\``, inline: true },
+                    ...(kickErrorMessage ? [{ name: 'Kick Error', value: kickErrorMessage.slice(0, 1000), inline: false }] : [])
+                )
+                .setTimestamp();
+
+            await logChannel.send({ embeds: [logEmbed] });
+            console.log(`✅ [BOT_CATCHER_LOG_SENT] Recorded ${kickErrorMessage ? 'kick failure' : 'kick'} for ${member.id} in security log channel ${logChannelId}.`);
+        } catch (logError) {
+            console.error(`🔴 [BOT_CATCHER_LOG_ERROR] Could not send the kick audit log to channel ${logChannelId}: ${logError.message} (Discord code: ${logError.code || 'unknown'})`);
+        }
+    }
+
+    async function deleteRecentBotCatcherMessages(guild) {
+        const cutoffTimestamp = Date.now() - BOT_CATCHER_RETENTION_MS;
+        let deletedCount = 0;
+        let failedChannelCount = 0;
+        const channelsToPurge = new Map();
+        const guildChannels = await guild.channels.fetch();
+
+        for (const channel of guildChannels.values()) {
+            if (
+                channel &&
+                channel.isTextBased() &&
+                typeof channel.bulkDelete === 'function'
+            ) {
+                channelsToPurge.set(channel.id, channel);
+            }
+
+            if (channel?.threads?.fetchArchived) {
+                for (const type of ['public', 'private']) {
+                    try {
+                        const archivedThreads = await channel.threads.fetchArchived({ type, fetchAll: true }, false);
+                        for (const thread of archivedThreads.threads.values()) {
+                            channelsToPurge.set(thread.id, thread);
+                        }
+                    } catch (threadError) {
+                        console.warn(`⚠️ [BOT_CATCHER_THREAD_WARN] Could not fetch ${type} archived threads for channel ${channel.id}: ${threadError.message}`);
+                    }
+                }
+            }
+        }
+
+        try {
+            const activeThreads = await guild.channels.fetchActiveThreads();
+            for (const thread of activeThreads.threads.values()) {
+                channelsToPurge.set(thread.id, thread);
+            }
+        } catch (threadError) {
+            console.error(`🔴 [BOT_CATCHER_THREAD_ERROR] Could not fetch active server threads: ${threadError.message}`);
+        }
+
+        for (const channel of channelsToPurge.values()) {
+            try {
+                let beforeId;
+
+                while (true) {
+                    const fetchedMessages = await channel.messages.fetch(
+                        beforeId ? { limit: 100, before: beforeId } : { limit: 100 }
+                    );
+                    if (fetchedMessages.size === 0) break;
+
+                    const recentMessages = fetchedMessages.filter(message => message.createdTimestamp >= cutoffTimestamp);
+                    if (recentMessages.size === 1) {
+                        await recentMessages.first().delete();
+                        deletedCount++;
+                    } else if (recentMessages.size > 1) {
+                        const deletedMessages = await channel.bulkDelete(recentMessages, true);
+                        deletedCount += deletedMessages.size;
+                    }
+
+                    const oldestMessage = fetchedMessages.last();
+                    if (fetchedMessages.size < 100 || !oldestMessage || oldestMessage.createdTimestamp < cutoffTimestamp) break;
+                    beforeId = oldestMessage.id;
+                }
+            } catch (purgeError) {
+                failedChannelCount++;
+                console.error(`🔴 [BOT_CATCHER_CHANNEL_PURGE_ERROR] Could not delete recent messages in channel ${channel.id}: ${purgeError.message}`);
+            }
+        }
+
+        return { deletedCount, scannedChannelCount: channelsToPurge.size, failedChannelCount };
+    }
 
     // ============================================================================
     // [NEW INFRASTRUCTURE DEPLOYMENT] CACHE PURGE DAEMON MATRIX (ANTI-RAM LEAK PROTOCOL)
@@ -804,8 +987,19 @@
                     { 
                         name: '🛡️ Anti-Spam Protocol (Message Flood Detector and Strike System)', 
                         value: 'anti_spam' 
+                    },
+                    {
+                        name: '🤖 Bot Catcher (Kick users who chat in a designated channel)',
+                        value: 'bot_catcher'
                     }
                 ]
+            },
+            {
+                type: 7,
+                name: 'channel',
+                description: 'Text channel to use for the Bot Catcher module',
+                required: false,
+                channel_types: [0, 5]
             }
         ]
     },
@@ -882,7 +1076,8 @@
                         { name: 'Server Status', value: 'status_server' },
                         { name: 'Support Panel', value: 'support_panel' },
                         { name: '🔗 Anti-Link Protocol', value: 'anti_link' },
-                        { name: '🛡️ Anti-Spam Protocol', value: 'anti_spam' }
+                        { name: '🛡️ Anti-Spam Protocol', value: 'anti_spam' },
+                        { name: '🤖 Bot Catcher', value: 'bot_catcher' }
                     ]
                 }
             ]
@@ -2235,9 +2430,6 @@
         // 2. Memastikan pemindaian hanya dieksekusi di dalam teritori Server (Guild Node)
         if (!message.guild || !message.member) return;
 
-        // 3. Mencegah error Null-Pointer jika paket pesan (content) belum termuat sempurna di RAM
-        if (!message.content) return;
-
         const guildId = message.guild.id;
         const authorId = message.author.id;
         const guildOwnerId = message.guild.ownerId; 
@@ -2254,6 +2446,93 @@
             
             // Jika tidak ada konfigurasi perlindungan, hentikan rantai eksekusi
             if (!protectionData) return;
+
+            if (
+                protectionData.botCatcherActive === true &&
+                protectionData.botCatcherChannelId === message.channel.id
+            ) {
+                const pendingMemberKey = `${guildId}:${authorId}`;
+                if (botCatcherPendingMembers.has(pendingMemberKey)) return;
+                botCatcherPendingMembers.add(pendingMemberKey);
+
+                const previousGuildTask = botCatcherGuildQueues.get(guildId) || Promise.resolve();
+                const currentGuildTask = previousGuildTask.catch(queueError => {
+                    console.error(`🔴 [BOT_CATCHER_QUEUE_ERROR] Previous task failed for server ${guildId}: ${queueError.message}`);
+                }).then(async () => {
+                    const currentDb = readDB();
+                    const currentProtectionData = currentDb[guildId]?.protectionModules;
+                    if (
+                        currentProtectionData?.botCatcherActive !== true ||
+                        currentProtectionData.botCatcherChannelId !== message.channel.id
+                    ) {
+                        return;
+                    }
+
+                    try {
+                        await message.author.send(
+                            `You have been kicked from **${message.guild.name}** for sending a message in the Bot Catcher channel. Please do not chat in that channel.`
+                        );
+                    } catch (dmError) {
+                        console.warn(`⚠️ [BOT_CATCHER_WARN] Could not DM user ${authorId}: ${dmError.message}`);
+                    }
+
+                    let wasKicked = false;
+                    let kickErrorMessage;
+                    let kickCount = Number(currentDb[guildId].botCatcherKickCount) || 0;
+                    try {
+                        await message.member.kick('Bot Catcher: sent a message in the designated channel');
+                        wasKicked = true;
+                        kickCount++;
+                        currentDb[guildId].botCatcherKickCount = kickCount;
+                        writeDB(currentDb);
+                    } catch (kickError) {
+                        kickErrorMessage = kickError.message;
+                        console.error(`🔴 [BOT_CATCHER_KICK_ERROR] Could not kick user ${authorId}: ${kickError.message}`);
+                    }
+
+                    try {
+                        const purgeResult = await deleteRecentBotCatcherMessages(message.guild);
+                        console.log(`✅ [BOT_CATCHER_PURGE] Deleted ${purgeResult.deletedCount} messages from the last 10 minutes across ${purgeResult.scannedChannelCount} server text channels and threads. ${purgeResult.failedChannelCount} channel(s) could not be cleared.`);
+                    } catch (purgeError) {
+                        console.error(`🔴 [BOT_CATCHER_PURGE_ERROR] Could not clear recent messages across server ${guildId}: ${purgeError.message}`);
+                    }
+
+                    try {
+                        const panelMessage = await upsertBotCatcherPanel(
+                            message.channel,
+                            currentProtectionData,
+                            kickCount
+                        );
+                        currentProtectionData.botCatcherPanelMessageId = panelMessage.id;
+                        writeDB(currentDb);
+                    } catch (panelError) {
+                        console.error(`🔴 [BOT_CATCHER_PANEL_ERROR] Could not update the warning panel in channel ${message.channel.id}: ${panelError.message}`);
+                    }
+
+                    await sendBotCatcherSecurityLog(
+                        message.guild,
+                        currentDb[guildId].logChannel,
+                        message.member,
+                        message.channel,
+                        kickCount,
+                        wasKicked ? undefined : (kickErrorMessage || 'Unknown error')
+                    );
+                });
+
+                botCatcherGuildQueues.set(guildId, currentGuildTask);
+                try {
+                    await currentGuildTask;
+                } finally {
+                    botCatcherPendingMembers.delete(pendingMemberKey);
+                    if (botCatcherGuildQueues.get(guildId) === currentGuildTask) {
+                        botCatcherGuildQueues.delete(guildId);
+                    }
+                }
+                return;
+            }
+
+            // Text-only protections do not process attachment-only messages.
+            if (!message.content) return;
 
             // Memastikan mode pertahanan 'Anti-Link' dikonfirmasi AKTIF (True)
             if (protectionData.antiLinkActive === true) {
@@ -3296,8 +3575,12 @@
             support_panel: ['supportChannel', 'supportTickets']
         };
         const protectionModuleKeys = {
-            anti_link: { dbKey: 'antiLinkActive', historyCode: 'PROTECTION_ANTI_LINK_MODULE' },
-            anti_spam: { dbKey: 'antiSpamActive', historyCode: 'PROTECTION_ANTI_SPAM_MODULE' }
+            anti_link: { dbKeys: ['antiLinkActive'], historyCode: 'PROTECTION_ANTI_LINK_MODULE' },
+            anti_spam: { dbKeys: ['antiSpamActive'], historyCode: 'PROTECTION_ANTI_SPAM_MODULE' },
+            bot_catcher: {
+                dbKeys: ['botCatcherActive', 'botCatcherChannelId', 'botCatcherPanelMessageId'],
+                historyCode: 'PROTECTION_BOT_CATCHER_MODULE'
+            }
         };
 
         if (!infrastructureModuleKeys[moduleToDisable] && !protectionModuleKeys[moduleToDisable]) {
@@ -3306,6 +3589,12 @@
         }
 
         const protectionSpec = protectionModuleKeys[moduleToDisable];
+        const botCatcherPanel = moduleToDisable === 'bot_catcher'
+            ? {
+                channelId: db[interaction.guild.id].protectionModules?.botCatcherChannelId,
+                messageId: db[interaction.guild.id].protectionModules?.botCatcherPanelMessageId
+            }
+            : null;
 
         // Determine whether the module was actually configured before purging
         let wasConfigured = false;
@@ -3316,10 +3605,12 @@
             if (!db[interaction.guild.id].protectionModules) {
                 db[interaction.guild.id].protectionModules = {};
             }
-            if (db[interaction.guild.id].protectionModules[protectionSpec.dbKey] !== undefined) {
-                wasConfigured = true;
-                purgedSummary.push(protectionSpec.dbKey);
-                delete db[interaction.guild.id].protectionModules[protectionSpec.dbKey];
+            for (const key of protectionSpec.dbKeys) {
+                if (db[interaction.guild.id].protectionModules[key] !== undefined) {
+                    wasConfigured = true;
+                    purgedSummary.push(key);
+                    delete db[interaction.guild.id].protectionModules[key];
+                }
             }
         } else {
             // Infrastructure modules are stored at the guild node root
@@ -3343,6 +3634,18 @@
 
         // [5] PERSIST & CONFIRM
         writeDB(db);
+
+        if (botCatcherPanel && wasConfigured && botCatcherPanel.channelId && botCatcherPanel.messageId) {
+            try {
+                const panelChannel = await client.channels.fetch(botCatcherPanel.channelId);
+                if (panelChannel && panelChannel.isTextBased()) {
+                    const panelMessage = await panelChannel.messages.fetch(botCatcherPanel.messageId);
+                    await panelMessage.delete();
+                }
+            } catch (panelRemovalError) {
+                console.warn(`⚠️ [BOT_CATCHER_DISABLE_WARN] Could not remove the Bot Catcher panel: ${panelRemovalError.message}`);
+            }
+        }
 
         if (!wasConfigured) {
             console.log(`⚠️ [DISABLE_WARNING] Module \`${moduleToDisable}\` was never configured in Server ID [${interaction.guild.id}] — nothing to purge.`);
@@ -4253,6 +4556,7 @@
         if (interaction.commandName === 'protection') {
             // [DATA EXTRACTION] Mengekstrak matriks parameter esensial dari Discord API
             const targetModule = interaction.options.getString('module');
+            const selectedChannel = interaction.options.getChannel('channel');
             // Sending the command always ACTIVATES the selected module.
             // Deactivation is handled exclusively by the /disable command.
             const activationMode = true;
@@ -4379,6 +4683,68 @@
                     console.log(`↳ Executor ID     : ${executorId}`);
                     console.log(`↳ Guild Jurisdiction : ${guildId}`);
                     console.log('🛡️'.repeat(35) + '\n');
+                } else if (targetModule === 'bot_catcher') {
+                    if (
+                        !selectedChannel ||
+                        (selectedChannel.type !== ChannelType.GuildText && selectedChannel.type !== ChannelType.GuildAnnouncement) ||
+                        selectedChannel.guildId !== guildId
+                    ) {
+                        await interaction.editReply({
+                            content: '❌ Please select a text or announcement channel in this server for the Bot Catcher.'
+                        });
+                        return;
+                    }
+
+                    const previousChannelId = db[guildId].protectionModules.botCatcherChannelId;
+                    const previousPanelMessageId = db[guildId].protectionModules.botCatcherPanelMessageId;
+                    const kickCount = Number(db[guildId].botCatcherKickCount) || 0;
+                    const existingPanelState = {
+                        botCatcherPanelMessageId: previousChannelId === selectedChannel.id
+                            ? previousPanelMessageId
+                            : null
+                    };
+                    const panelMessage = await upsertBotCatcherPanel(
+                        selectedChannel,
+                        existingPanelState,
+                        kickCount
+                    );
+
+                    db[guildId].protectionModules.botCatcherActive = true;
+                    db[guildId].protectionModules.botCatcherChannelId = selectedChannel.id;
+                    db[guildId].protectionModules.botCatcherPanelMessageId = panelMessage.id;
+                    writeDB(db);
+                    recordDatabaseHistory(
+                        guildId,
+                        executorId,
+                        'PROTECTION_BOT_CATCHER_MODULE',
+                        `ACTIVE | Channel: ${selectedChannel.id}`
+                    );
+
+                    if (previousChannelId && previousPanelMessageId) {
+                        try {
+                            const previousChannel = await client.channels.fetch(previousChannelId);
+                            if (previousChannel && previousChannel.isTextBased()) {
+                                const previousPanel = await previousChannel.messages.fetch(previousPanelMessageId);
+                                await previousPanel.delete();
+                            }
+                        } catch (panelRemovalError) {
+                            console.warn(`⚠️ [BOT_CATCHER_PANEL_WARN] Could not remove the previous panel: ${panelRemovalError.message}`);
+                        }
+                    }
+
+                    const successEmbed = new EmbedBuilder()
+                        .setColor('#00FF00')
+                        .setTitle('🤖 BOT CATCHER: ONLINE')
+                        .setDescription(`The Bot Catcher is active in ${selectedChannel}. Users who send a message there will receive a direct message and be kicked. Messages from the previous 10 minutes will be deleted across this server's text channels and threads.`)
+                        .addFields({
+                            name: 'Members Kicked in This Server',
+                            value: `\`${kickCount}\``,
+                            inline: true
+                        })
+                        .setFooter({ text: `Guardian Server | Node ID: ${guildId}` })
+                        .setTimestamp();
+                    await interaction.editReply({ embeds: [successEmbed] });
+                    console.log(`✅ [BOT_CATCHER_ACTIVE] Enabled in channel ${selectedChannel.id} for server ${guildId}.`);
                 }
             } catch (engineError) {
                 // [ERROR HANDLING] Mencegah hancurnya seluruh siklus Node.js saat tejadi isolasi fatal

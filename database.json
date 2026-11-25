@@ -15,9 +15,13 @@
         "supportTickets": {},
         "protectionModules": {
             "antiSpamActive": true,
-            "antiLinkActive": true
+            "antiLinkActive": true,
+            "botCatcherActive": true,
+            "botCatcherChannelId": "1575036184084742154",
+            "botCatcherPanelMessageId": "1575118995210641499"
         },
-        "logChannel": "1522554280618364948"
+        "logChannel": "1522554280618364948",
+        "botCatcherKickCount": 3
     },
     "1544296446981832744": {
         "vcChannel": "1544296448110370826"
