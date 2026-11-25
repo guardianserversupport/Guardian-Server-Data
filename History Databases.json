@@ -130,5 +130,26 @@
                 "unixEpochMs": 1789030706627
             }
         ]
+    },
+    "GLOBAL_INFRASTRUCTURE": {
+        "lastKnownConfigurator": "1280789307027755019",
+        "historyLogs": [
+            {
+                "logId": "BAD2A3B4",
+                "actionTrace": "SET_LOCKDOWN_TERMINATED",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "System Wide Override at 14 Oktober 2026 pukul 18.29.22 WIB",
+                "timestampStr": "14 Oktober 2026 pukul 18.29.22 WIB",
+                "unixEpochMs": 1791977362243
+            },
+            {
+                "logId": "23AD6DCB",
+                "actionTrace": "SET_LOCKDOWN_ACTIVATED",
+                "commanderId": "1280789307027755019",
+                "injectedTarget": "System Wide Override at 14 Oktober 2026 pukul 18.29.05 WIB",
+                "timestampStr": "14 Oktober 2026 pukul 18.29.05 WIB",
+                "unixEpochMs": 1791977345776
+            }
+        ]
     }
 }
